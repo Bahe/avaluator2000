@@ -1,0 +1,3038 @@
+<!--
+  Avaluator2000 — gestor de notes per a mòduls professionals
+  Copyright (c) 2026 Bahe · https://github.com/Bahe/avaluator2000
+
+  Licensed under the EUPL, Version 1.2 or – as soon as they will be approved by
+  the European Commission – subsequent versions of the EUPL (the "Licence").
+  You may not use this work except in compliance with the Licence.
+  You may obtain a copy of the Licence at: https://joinup.ec.europa.eu/software/page/eupl
+
+  Unless required by applicable law or agreed to in writing, software distributed
+  under the Licence is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR
+  CONDITIONS OF ANY KIND, either express or implied.
+-->
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avaluator2000 · MP8 Aplicacions web</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1d2830; --ink-soft:#4a5a66; --ink-mute:#7d8b95;
+  --paper:#eef0ee; --card:#ffffff; --line:#dbe0dd; --line-soft:#e8ebe8;
+  --blau:#23559c; --blau-soft:#e8eef8; --blau-line:#b9cbe8;
+  --verd:#2f7d4f; --verd-soft:#e5f2e9;
+  --roig:#b23a3a; --roig-soft:#f8e8e8;
+  --ambre:#96690f; --ambre-soft:#f7efdc;
+  --r:10px;
+  font-size:15px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.55}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink)}
+h1,h2,h3,.brand,.tab,.navsec{font-family:'Archivo',sans-serif}
+
+/* ---- shell ---- */
+.app{display:grid;grid-template-columns:228px minmax(0,1fr);min-height:100vh}
+.side{background:var(--ink);color:#e8ecef;padding:20px 0;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;overflow-y:auto}
+.brand{padding:0 20px 14px;border-bottom:1px solid #33414c}
+.brand .mod{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#93a4b0}
+.brand .nom{font-size:19px;font-weight:700;letter-spacing:.01em}
+.navsec{padding:12px 22px 4px;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#7d8e99;font-weight:600}
+nav{padding:2px 10px;display:flex;flex-direction:column;gap:2px}
+.tab{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:none;border:0;color:#c3cdd4;
+  padding:8px 12px;border-radius:8px;font-size:13.5px;font-weight:600;letter-spacing:.02em;font-family:'Archivo'}
+.tab .k{display:inline-block;width:20px;text-align:center;font-size:14px;flex-shrink:0}
+.tab:hover{background:#2a3742;color:#fff}
+.tab.on{background:var(--blau);color:#fff}
+.tab .tabtxt{display:flex;flex-direction:column;align-items:flex-start;line-height:1.3;min-width:0}
+.tab .tabnom{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.tab .tabsub{font-size:10px;letter-spacing:0;text-transform:none;font-weight:500;color:#8a99a3;font-family:'Inter'}
+.tab.on .tabsub{color:#d7e2ee}
+.tab.afegeix{color:#7d8e99;font-weight:600}
+.tab.afegeix:hover{color:#fff}
+.tab.curs{align-items:flex-start}
+.side .foot{margin-top:auto;padding:14px 20px;font-size:11.5px;color:#8a99a3;border-top:1px solid #33414c}
+#estat-desat{display:inline-flex;align-items:center;gap:6px}
+#estat-desat .dot{width:7px;height:7px;border-radius:50%;background:#5cb87a;display:inline-block}
+#estat-desat.saving .dot{background:#e2b53e}
+#estat-desat.mem .dot{background:#d97066}
+
+.subtabs{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:20px;border-bottom:1.5px solid var(--line)}
+.stab{background:none;border:0;padding:9px 14px 10px;font-family:'Archivo';font-weight:600;font-size:13.5px;
+  color:var(--ink-mute);border-bottom:2.5px solid transparent;margin-bottom:-1.5px}
+.stab:hover{color:var(--ink)}
+.stab.on{color:var(--blau);border-color:var(--blau)}
+
+.main{padding:26px 30px 40px;max-width:1220px}
+.crumb{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-mute);margin-bottom:4px}
+.crumb a{color:var(--blau);text-decoration:none;cursor:pointer}
+.crumb a:hover{text-decoration:underline}
+h1{font-size:26px;font-weight:700;letter-spacing:-.01em;margin-bottom:4px}
+.lead{color:var(--ink-soft);font-size:14px;margin-bottom:22px;max-width:75ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:12px}
+.tile{display:flex;align-items:center;gap:12px;text-align:left;background:#f5f7f8;border:1px solid var(--line);
+  border-radius:10px;padding:13px 15px;cursor:pointer;width:100%}
+.tile:hover{border-color:var(--blau);background:#eef3fb}
+.tile .tile-ic{font-size:19px;width:26px;text-align:center;flex-shrink:0;color:var(--blau)}
+.tile .tile-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile .tile-txt b{font-family:'Archivo';font-size:13.5px;font-weight:700}
+.tile .tile-txt span{font-size:11.5px;color:var(--ink-mute)}
+tr.fila-click{cursor:pointer}
+tr.fila-click:hover{background:#eef3fb}
+tr.fila-click td a{position:relative;z-index:1}
+
+/* ---- primitives ---- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin-bottom:16px}
+.card h2{font-size:16px;font-weight:700;margin-bottom:10px}
+.card h3{font-size:14px;font-weight:700;margin:14px 0 8px}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.stat .lab{font-size:12px;color:var(--ink-mute)}
+.stat .val{font-family:'Archivo';font-size:26px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+.stat .sub{font-size:12px;color:var(--ink-soft)}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font-family:'Archivo';font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-mute);
+  text-align:left;padding:8px 10px;border-bottom:1.5px solid var(--line);white-space:nowrap;font-weight:600}
+td{padding:8px 10px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.mut{color:var(--ink-mute)} .soft{color:var(--ink-soft)}
+.tiny{font-size:12px}
+
+.btn{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink)}
+.btn:hover{border-color:var(--ink-mute)}
+.btn.pri{background:var(--blau);border-color:var(--blau);color:#fff}
+.btn.pri:hover{background:#1c4784}
+.btn.peril{color:var(--roig);border-color:#e4c4c4}
+.btn.peril:hover{background:var(--roig-soft)}
+.btn.mini{padding:3px 9px;font-size:12px;border-radius:6px}
+.toolrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.spacer{flex:1}
+
+input[type=text],input[type=number],select,textarea{background:#fff;border:1px solid var(--line);border-radius:7px;padding:6px 9px;font-size:13.5px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--blau-line);border-color:var(--blau)}
+input.inline{border-color:transparent;background:transparent;width:100%;padding:5px 7px;border-radius:6px}
+input.inline:hover{background:#f4f6f4;border-color:var(--line)}
+input.inline:focus{background:#fff}
+input.nota{width:66px;text-align:right;font-variant-numeric:tabular-nums}
+textarea{width:100%;resize:vertical;min-height:44px;font-size:12.5px;line-height:1.4}
+
+.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.b-blau{background:var(--blau-soft);color:var(--blau)}
+.b-verd{background:var(--verd-soft);color:var(--verd)}
+.b-roig{background:var(--roig-soft);color:var(--roig)}
+.b-ambre{background:var(--ambre-soft);color:var(--ambre)}
+.b-gris{background:#eef1ef;color:var(--ink-soft)}
+
+.nota-final{font-family:'Archivo';font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.nota-final.pend{color:var(--roig)}
+.nota-final.prov{color:var(--ink-mute)}
+
+.avis{border-left:3px solid var(--ambre);background:var(--ambre-soft);border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;margin:12px 0}
+.avis.roig{border-color:var(--roig);background:var(--roig-soft)}
+.avis.blau{border-color:var(--blau);background:var(--blau-soft)}
+
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:5px 11px;font-size:12.5px;font-weight:600;color:var(--ink-mute);border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:#f1f4f1}
+.seg button.on{background:var(--blau);color:#fff}
+.equip-card{border:1px solid var(--line);border-radius:var(--r);margin-bottom:14px;overflow:hidden;background:#fff}
+.equip-head{display:flex;align-items:center;gap:12px;padding:11px 16px;background:#f6f8f6;border-bottom:1px solid var(--line)}
+.equip-head .n{font-family:'Archivo';font-weight:700;font-size:14.5px}
+.equip-head .nota-eq{margin-left:auto;font-family:'Archivo';font-weight:700;font-size:19px;font-variant-numeric:tabular-nums}
+.equip-body{padding:6px 16px 12px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#f1f4f1;border:1px solid var(--line);border-radius:99px;padding:3px 11px;font-size:12.5px;margin:3px 4px 3px 0}
+.chip .x{border:0;background:none;color:var(--ink-mute);font-size:13px;padding:0 1px;line-height:1}
+.chip .x:hover{color:var(--roig)}
+.sumtot{font-family:'Archivo';font-weight:700}
+.ok{color:var(--verd)} .ko{color:var(--roig)}
+.ratag{display:inline-flex;align-items:center;gap:5px;margin:2px 8px 2px 0;font-size:12.5px}
+.side{grid-row:1 / span 2}
+.peu{grid-column:2;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:14px 30px;border-top:1px solid var(--line);color:var(--ink-mute);font-size:12px}
+.peu a{color:var(--blau);text-decoration:none}
+.peu a:hover{text-decoration:underline}
+@media (max-width:840px){.app{grid-template-columns:1fr}.side{position:static;height:auto;grid-row:auto}.main{padding:20px 14px 60px}.peu{grid-column:1;padding:14px}}
+
+/* ---- modal (substitueix confirm/prompt/alert natius, que no funcionen en entorns com un artefacte incrustat) ---- */
+.modal-overlay{position:fixed;inset:0;background:rgba(29,40,48,.5);display:flex;align-items:center;justify-content:center;z-index:999;padding:20px}
+.modal-box{background:#fff;border-radius:12px;padding:20px 22px;max-width:440px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.28)}
+.modal-box p{font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap;margin-bottom:14px;line-height:1.5}
+.modal-box input[type=text]{width:100%;margin-bottom:14px}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px}
+.modal-select{width:100%;margin-bottom:14px;border:1px solid var(--line);border-radius:8px;padding:6px;font-size:13.5px;font-family:'Inter'}
+.modal-select option{padding:5px 7px}
+
+.badge.b-draft{background:#f7efdc;color:var(--ambre)}
+.barra-sel{position:sticky;top:0;z-index:5;background:var(--blau-soft);border:1px solid var(--blau-line);border-radius:8px;
+  padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+.cel-buida{background:#fdf8ef}
+td.sticky-nom,th.sticky-nom{position:sticky;left:0;background:var(--card);z-index:2}
+tr:hover td.sticky-nom{background:#f3f6fa}
+.prog{height:5px;border-radius:3px;background:var(--line-soft);overflow:hidden;min-width:90px;flex:0 0 90px}
+.prog i{display:block;height:100%;background:var(--verd)}
+
+th.cap-ra-res{max-width:120px;white-space:normal;text-transform:none;letter-spacing:0;font-size:11px;vertical-align:bottom}
+
+/* Fitxa de l'alumne */
+.fitxa-resum{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap;margin:14px 0 18px}
+.fitxa-nota{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 20px;min-width:180px}
+.fitxa-nota .gran{font-family:'Archivo';font-weight:700;font-size:34px;line-height:1.1;margin:2px 0}
+.fitxa-ras{display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex:1}
+.fitxa-chip{display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--card);
+  border:1px solid var(--line);border-radius:9px;padding:9px 13px;min-width:74px;cursor:pointer}
+.fitxa-chip:hover{border-color:var(--blau)}
+.fitxa-chip b{font-family:'Archivo';font-size:11.5px;color:var(--blau)}
+.fitxa-chip span{font-family:'Archivo';font-weight:700;font-size:17px}
+.fitxa-chip i{font-style:normal;font-size:10px}
+.fitxa-blocs{border-top:1px solid var(--line-soft);padding-top:10px;margin-top:12px}
+.fitxa-bloc-cap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+table.fitxa-taula td{padding:5px 8px;border-bottom:1px dashed var(--line-soft);font-size:13px}
+table.fitxa-taula tr:last-child td{border-bottom:0}
+.nom-clic{color:inherit;text-decoration:none;border-bottom:1px dotted var(--ink-mute);cursor:pointer}
+.nom-clic:hover{color:var(--blau);border-color:var(--blau)}
+
+/* Graella completa (estil quadern de notes): columnes fixes a l'esquerra i scroll lateral */
+.main.ample{max-width:none}
+.graella-wrap{overflow-x:auto;padding:0}
+table.graella{width:auto;border-collapse:separate;border-spacing:0}
+table.graella th,table.graella td{border-bottom:1px solid var(--line-soft)}
+/* capçalera d'activitat: dues línies i punts suspensius si no hi cap */
+table.graella{table-layout:fixed}
+table.graella th.cap-act{width:104px;min-width:104px;max-width:104px;vertical-align:bottom;
+  padding:8px 8px 9px;text-transform:none;letter-spacing:0;white-space:normal}
+table.graella th.cap-act span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;font-weight:600;font-size:11.5px;line-height:1.28;color:var(--ink-soft);
+  word-break:break-word;max-height:2.6em}
+table.graella td.cel-act{width:104px;min-width:104px;padding:4px 6px;text-align:center}
+table.graella input.nota-cel{width:60px;padding:4px 2px;text-align:center}
+/* columnes fixes: nom de l'alumne i, just després, la nota de l'RA */
+table.graella th.sticky-nom,table.graella td.sticky-nom{left:0;min-width:170px;max-width:170px;padding-left:12px}
+table.graella th.sticky-ra,table.graella td.sticky-ra{position:sticky;left:170px;z-index:2;width:78px;min-width:78px;
+  text-align:center;background:var(--card);border-right:2px solid var(--blau-line)}
+table.graella th.sticky-ra{z-index:6;background:var(--blau-soft);color:var(--blau);text-transform:none;letter-spacing:0;font-size:11.5px;padding:8px 6px}
+table.graella th.sticky-nom{z-index:6}
+tr:hover td.sticky-ra{background:#f3f6fa}
+/* bandes de color segons la nota (buit = color per defecte) */
+.n-baix{background:#fbeaea!important}
+.n-just{background:#fbf3df!important}
+.n-ok{background:#e9f4ed!important}
+table.graella th.cap-act.mou{cursor:grab}
+table.graella th.cap-act.mou:active{cursor:grabbing}
+table.graella th.cap-act.mou:hover{background:var(--blau-soft)}
+table.graella th.drop-abans{box-shadow:inset 3px 0 0 var(--blau)}
+table.graella th.drop-despres{box-shadow:inset -3px 0 0 var(--blau)}
+table.graella td.sticky-ra .nota-final{font-size:15px}
+
+.lock-screen{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;z-index:2000;padding:20px}
+.lock-card{background:#fff;border-radius:14px;padding:34px 30px;width:100%;max-width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.lock-title{font-family:'Archivo';font-weight:700;font-size:19px;margin:14px 0 4px;color:var(--ink)}
+.lock-sub{font-size:13px;color:var(--ink-soft);margin-bottom:18px}
+.lock-input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;text-align:center;box-sizing:border-box}
+.lock-error{color:var(--roig);font-size:12.5px;margin-top:10px}
+.switch-row{display:flex;align-items:center;gap:8px;font-family:'Archivo';font-weight:600;font-size:13.5px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="mod">Gestor de notes</div>
+      <div class="nom">Avaluator2000</div>
+    </div>
+    <div class="navsec">Grups-aula</div>
+    <nav id="nav-grups"></nav>
+    <div class="navsec">Grup-aula</div>
+    <nav id="nav-grup"></nav>
+    <div class="navsec">General</div>
+    <nav id="nav-general"></nav>
+    <div class="foot">
+      <span id="estat-desat"><span class="dot"></span><span id="estat-txt">Carregant…</span></span>
+    </div>
+  </aside>
+  <main class="main" id="main"></main>
+  <footer class="peu">
+    <span><b>Avaluator2000</b> · gestor de notes per a mòduls professionals</span>
+    <span class="spacer"></span>
+    <a href="https://github.com/Bahe/avaluator2000" target="_blank" rel="noopener">Codi i documentació a GitHub</a>
+  </footer>
+</div>
+<div id="modal-root"></div>
+<div id="lock-screen" class="lock-screen" style="display:none">
+  <div class="lock-card">
+    <svg viewBox="0 0 96 96" width="56" height="56" style="display:block;margin:0 auto">
+      <rect x="0" y="0" width="96" height="96" rx="22" fill="#23559c"/>
+      <rect x="16" y="16" width="30" height="30" rx="6" fill="#e8eef8" opacity=".35"/>
+      <rect x="50" y="16" width="30" height="30" rx="6" fill="#e8eef8" opacity=".35"/>
+      <rect x="16" y="50" width="30" height="30" rx="6" fill="#e8eef8" opacity=".35"/>
+      <rect x="50" y="50" width="30" height="30" rx="6" fill="#2f7d4f"/>
+      <path d="M 58 65 L 64 71 L 76 58" stroke="white" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+    <div class="lock-title">Avaluator2000</div>
+    <p class="lock-sub">Portal protegit amb contrasenya.</p>
+    <input id="lock-pw" class="lock-input" type="password" placeholder="Contrasenya" autocomplete="current-password" onkeydown="if(event.key==='Enter')intentaDesbloqueig()">
+    <button class="btn pri" style="width:100%;margin-top:10px" onclick="intentaDesbloqueig()">Desbloqueja</button>
+    <p id="lock-error" class="lock-error" style="display:none">Contrasenya incorrecta.</p>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= utilitats ================= */
+const $ = (s, r=document) => r.querySelector(s);
+const uid = () => Math.random().toString(36).slice(2, 9);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = (n, d=1) => (n === null || n === undefined || isNaN(n)) ? "—" : n.toFixed(d).replace(".", ",");
+const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+const deep = o => JSON.parse(JSON.stringify(o));
+
+/* ---- modal propi: substitueix confirm()/prompt()/alert() natius, que poden no funcionar
+   (per exemple dins d'un iframe amb sandbox, com el previsualitzador d'artefactes) ---- */
+function dialogModal(cos, { tipus = "confirm", valorInicial = "" } = {}) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <p>${esc(cos)}</p>
+        ${tipus === "prompt" ? `<input type="text" id="modal-input" value="${esc(valorInicial)}">` : ""}
+        <div class="modal-actions">
+          ${tipus !== "alert" ? `<button class="btn" id="modal-cancelar">Cancel·la</button>` : ""}
+          <button class="btn pri" id="modal-ok">D'acord</button>
+        </div>
+      </div>`;
+    document.getElementById("modal-root").appendChild(overlay);
+    const input = overlay.querySelector("#modal-input");
+    if (input) { input.focus(); input.select(); }
+    const acaba = valor => { overlay.remove(); resolve(valor); };
+    overlay.querySelector("#modal-ok").onclick = () => acaba(tipus === "prompt" ? (input.value ?? "") : true);
+    const btnCancel = overlay.querySelector("#modal-cancelar");
+    if (btnCancel) btnCancel.onclick = () => acaba(tipus === "prompt" ? null : false);
+    overlay.addEventListener("keydown", e => {
+      if (e.key === "Escape") acaba(tipus === "prompt" ? null : false);
+      if (e.key === "Enter" && tipus !== "alert") acaba(tipus === "prompt" ? (input.value ?? "") : true);
+    });
+    overlay.addEventListener("mousedown", e => { if (e.target === overlay) acaba(tipus === "prompt" ? null : false); });
+  });
+}
+const confirmModal = cos => dialogModal(cos, { tipus: "confirm" });
+const promptModal = (cos, valorInicial = "") => dialogModal(cos, { tipus: "prompt", valorInicial });
+const alertModal = cos => dialogModal(cos, { tipus: "alert" });
+
+/* Selector amb desplegable de veritat (substitueix els prompts on calia escriure un número).
+   opcions: [{valor, etiqueta, sub}] · retorna el valor triat, o null si es cancel·la. */
+function selectModal(cos, opcions, { valorInicial = null, etiquetaOk = "D'acord" } = {}) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="modal-box">
+        <p>${esc(cos)}</p>
+        <select id="modal-select" class="modal-select" size="${Math.min(Math.max(opcions.length, 3), 8)}">
+          ${opcions.map(o => `<option value="${esc(String(o.valor))}" ${String(o.valor) === String(valorInicial) ? "selected" : ""}>${esc(o.etiqueta)}${o.sub ? " — " + esc(o.sub) : ""}</option>`).join("")}
+        </select>
+        <div class="modal-actions">
+          <button class="btn" id="modal-cancelar">Cancel·la</button>
+          <button class="btn pri" id="modal-ok">${esc(etiquetaOk)}</button>
+        </div>
+      </div>`;
+    document.getElementById("modal-root").appendChild(overlay);
+    const sel = overlay.querySelector("#modal-select");
+    if (!sel.value && opcions.length) sel.selectedIndex = 0;
+    sel.focus();
+    const acaba = v => { overlay.remove(); resolve(v); };
+    overlay.querySelector("#modal-ok").onclick = () => acaba(sel.value);
+    overlay.querySelector("#modal-cancelar").onclick = () => acaba(null);
+    sel.ondblclick = () => acaba(sel.value);
+    overlay.addEventListener("keydown", e => {
+      if (e.key === "Escape") acaba(null);
+      if (e.key === "Enter") acaba(sel.value);
+    });
+    overlay.addEventListener("mousedown", e => { if (e.target === overlay) acaba(null); });
+  });
+}
+
+/* ================= dades d'exemple ================= */
+const NIVELLS_DEF = ["No assolit", "Amb ajuda", "Assolit", "Amb autonomia"];
+const fila = (ca, titol, n0, n1, n2, n3) => ({ id: uid(), ca, titol,
+  nivells: [n0 ?? "No es fa o no funciona", n1 ?? "Assolit amb ajuda docent significativa", n2 ?? "Assolit de manera autònoma", n3 ?? "Autònom, justificat i documentat"] });
+
+function seedEquips(alumnes) {
+  const noms = ["Equip Bit", "Equip Byte", "Equip Píxel", "Equip Núvol"];
+  return noms.map((n, i) => ({ id: uid(), nom: n, membres: alumnes.slice(i * 4, i * 4 + 4).map(a => a.id) }));
+}
+
+function seed() {
+  const noms = [
+    "Aina Puig", "Marc Vila", "Júlia Serra", "Pol Ferrer",
+    "Laia Bosch", "Nil Costa", "Carla Roca", "Biel Font",
+    "Emma Soler", "Arnau Mas", "Ona Camps", "Jan Riera",
+    "Martina Pons", "Èric Sala", "Noa Vidal", "Hugo Rovira"
+  ];
+  const alumnes = noms.map((n, i) => ({ id: "al" + (i + 1), nom: n }));
+
+  /* ---- Repte 1 · L'oficina digital (amb dades d'exemple) ---- */
+  const eq1 = seedEquips(alumnes);
+  const r1 = {
+    id: "r1", nom: "Repte 1 · L'oficina digital", sub: "Correu, calendari i ofimàtica web per a un client",
+    trimestre: "1r trimestre", ras: ["RA4", "RA5"],
+    equips: eq1,
+    instruments: [
+      { id: "PV1", nom: "PV1 · Validació individual ofimàtica", tipus: "individual", pes: { RA4: 30, RA5: 0 }, minim: 4 },
+      { id: "PV2", nom: "PV2 · Validació individual correu", tipus: "individual", pes: { RA4: 0, RA5: 30 }, minim: 4 },
+      { id: "E1", nom: "E1 · Informe i proposta tècnica", tipus: "equip", pes: { RA4: 10, RA5: 10 }, minim: null },
+      { id: "E2", nom: "E2 · Correu i calendari web", tipus: "equip", pes: { RA4: 0, RA5: 25 }, minim: null },
+      { id: "E3", nom: "E3 · Suite ofimàtica web", tipus: "equip", pes: { RA4: 25, RA5: 0 }, minim: null },
+      { id: "E4", nom: "E4 · Demo col·laborativa + manual", tipus: "equip", pes: { RA4: 15, RA5: 15 }, minim: null },
+      { id: "E5", nom: "E5 · Presentació i defensa", tipus: "equip", pes: { RA4: 10, RA5: 10 }, minim: null },
+      { id: "OBS", nom: "Observació · diari, rols i actitud", tipus: "individual", pes: { RA4: 10, RA5: 10 }, minim: null },
+    ],
+    rubriques: {
+      E1: { nivellNoms: NIVELLS_DEF, files: [
+        fila("4.1", "Utilitat de l'ofimàtica web", "No s'explica", "Explicació superficial", "Utilitat ben establerta", "Utilitat lligada a les necessitats del client"),
+        fila("4.2", "Comparativa d'ofimàtica web", "Sense comparativa", "Comparativa de catàleg, sense criteris", "3+ alternatives amb criteris propis", "Criteris justificats i fonts fiables"),
+        fila("5.1", "Comparativa de correu/calendari web", "Sense comparativa", "Alternatives sense criteri", "3+ alternatives amb criteris propis", "Comparativa completa amb proposta raonada"),
+        fila("DOC", "Qualitat de l'informe i el pitch", "Inexistent o il·legible", "Desordenat o incomplet", "Complet, clar i dins del format", "Excel·lent: clar, visual i convincent"),
+      ]},
+      E2: { nivellNoms: NIVELLS_DEF, files: [
+        fila("5.2", "Instal·lació del correu web", "No funciona", "Funciona amb intervenció docent significativa", "Funciona de manera autònoma", "Funciona i l'equip justifica les decisions"),
+        fila("5.3", "Integració amb el servidor", "Sense integració", "Parcial (només lectura o errors freqüents)", "Enviament i recepció correctes", "Correcta + configuració documentada i reproduïble"),
+        fila("5.4", "Gestió de comptes", "Inexistents o caòtics", "Creats sense política coherent", "Tots els comptes amb política de noms", "Política + àlies/grups ben resolts"),
+        fila("5.5", "Verificació d'accés", "No verificat", "Verificat parcialment", "Multi-dispositiu amb evidències", "Verificació sistemàtica com a protocol"),
+        fila("5.6", "Calendari web", "No desplegat", "Desplegat sense compartits", "Personals + compartit operatius", "Complet + invitacions i recursos"),
+        fila("DOC", "Memòria tècnica", "Inexistent", "Incompleta o no reproduïble", "Completa i reproduïble", "Completa, clara i amb incidències documentades"),
+      ]},
+      E3: { nivellNoms: NIVELLS_DEF, files: [
+        fila("4.3", "Instal·lació de la suite", "No funciona", "Funciona amb molta ajuda", "Funciona de manera autònoma", "Funciona i les decisions estan justificades"),
+        fila("4.4", "Comptes, grups i permisos", "Inexistents", "Comptes sense estructura", "Comptes i grups segons el client", "Estructura completa + permisos afinats"),
+        fila("4.5", "Seguretat d'accés", "Cap mesura", "HTTPS o contrasenyes, no tot", "HTTPS + política de contrasenyes", "Tot + 2FA o mesures addicionals"),
+        fila("4.6", "Quadre de prestacions", "Inexistent", "Llista superficial", "Prestacions i limitacions per aplicació", "Quadre complet amb recomanacions d'ús"),
+        fila("DOC", "Memòria tècnica", "Inexistent", "Incompleta o no reproduïble", "Completa i reproduïble", "Completa, clara i amb incidències documentades"),
+      ]},
+      E4: { nivellNoms: NIVELLS_DEF, files: [
+        fila("4.7", "Escenari col·laboratiu", "No es demostra", "Demostració parcial", "Edició simultània i permisos demostrats", "Escenari realista, fluid i ben narrat"),
+        fila("5.7", "Calendari: cites i tasques", "No es demostra", "Només visualització", "Reunió + invitacions + tasques", "Ús avançat explicat"),
+        fila("MAN", "Manual d'usuari", "Inexistent", "Tècnic o confús per al client", "Clar, amb captures, apte per a no tècnics", "Excel·lent: provat amb usuaris externs"),
+        fila("DOC", "Evidències de la demo", "Cap", "Incompletes", "Vídeo/guió complet", "Evidències completes i reutilitzables"),
+      ]},
+      E5: { nivellNoms: NIVELLS_DEF, files: [
+        fila("PRE", "Presentació al client", "No es fa", "Llegida o desorganitzada", "Clara, dins del temps, tothom hi parla", "Convincent i adaptada al client"),
+        fila("DEC", "Justificació de decisions", "Cap", "Respostes vagues", "Decisions ben argumentades", "Argumentació sòlida amb alternatives valorades"),
+        fila("CLI", "Adequació a les necessitats", "No s'hi relaciona", "Relació parcial", "Solució lligada a les necessitats inicials", "Inclou proposta de futur"),
+        fila("DOC", "Material de suport", "Inexistent", "Pobre o sobrecarregat", "Suport visual correcte", "Suport que reforça el discurs"),
+      ]},
+    },
+    avaluacions: {
+      equip: {
+        E1: {
+          [eq1[0].id]: { nivells: [2, 3, 2, 2] },
+          [eq1[1].id]: { nivells: [2, 2, 2, 1] },
+          [eq1[2].id]: { nivells: [3, 3, 2, 3] },
+          [eq1[3].id]: { nivells: [1, 2, 1, 2] },
+        },
+        E2: {
+          [eq1[0].id]: { nivells: [2, 2, 3, 2, 2, 2] },
+          [eq1[1].id]: { nivells: [3, 2, 2, 2, 3, 2] },
+        },
+      },
+      factors: {
+        E1: { al2: 1.1, al4: 0.9, al7: 1.1, al12: 0.8, al14: 0.9 },
+        E2: { al2: 1.1, al6: 0.9 },
+      },
+      individual: {
+        PV2: { al1: 7.5, al2: 8.0, al3: 6.0, al4: 4.5, al5: 6.5, al6: 5.0, al7: 9.0, al8: 3.5,
+               al9: 7.0, al10: 6.0, al11: 8.5, al12: 4.0, al13: 7.5, al14: 5.5, al15: 8.0, al16: 6.5 },
+        OBS: { al1: 8, al2: 9, al3: 7, al4: 6, al5: 8, al6: 6.5, al7: 9, al8: 5,
+               al9: 7.5, al10: 7, al11: 8.5, al12: 5.5, al13: 8, al14: 6, al15: 8.5, al16: 7 },
+      },
+    },
+  };
+
+  /* ---- Repte 2 · La plataforma interna (estructura preparada, sense notes) ---- */
+  const r2 = {
+    id: "r2", nom: "Repte 2 · La plataforma interna", sub: "Gestió d'arxius web i plataforma de formació (Moodle)",
+    trimestre: "2n trimestre", ras: ["RA2", "RA3"],
+    equips: seedEquips(alumnes),
+    instruments: [
+      { id: "PV3", nom: "PV3 · Validació individual arxius web", tipus: "individual", pes: { RA2: 0, RA3: 30 }, minim: 4 },
+      { id: "PV4", nom: "PV4 · Validació individual Moodle", tipus: "individual", pes: { RA2: 30, RA3: 0 }, minim: 4 },
+      { id: "F1", nom: "F1 · Informe i proposta tècnica", tipus: "equip", pes: { RA2: 10, RA3: 10 }, minim: null },
+      { id: "F2", nom: "F2 · Desplegament de gestió d'arxius web", tipus: "equip", pes: { RA2: 0, RA3: 25 }, minim: null },
+      { id: "F3", nom: "F3 · Desplegament de Moodle", tipus: "equip", pes: { RA2: 25, RA3: 0 }, minim: null },
+      { id: "F4", nom: "F4 · Integració, seguretat i manual", tipus: "equip", pes: { RA2: 15, RA3: 15 }, minim: null },
+      { id: "F5", nom: "F5 · Presentació i defensa", tipus: "equip", pes: { RA2: 10, RA3: 10 }, minim: null },
+      { id: "OBS", nom: "Observació · diari, rols i actitud", tipus: "individual", pes: { RA2: 10, RA3: 10 }, minim: null },
+    ],
+    rubriques: {
+      F1: { nivellNoms: NIVELLS_DEF, files: [
+        fila("3.1", "Utilitat de la gestió d'arxius web"), fila("3.2", "Comparativa d'eines d'arxius web"),
+        fila("2.x", "Anàlisi de plataformes de formació"), fila("DOC", "Qualitat de l'informe i el pitch"),
+      ]},
+      F2: { nivellNoms: NIVELLS_DEF, files: [
+        fila("3.3", "Instal·lació i adaptació de l'eina"), fila("3.4", "Comptes d'usuari segons permisos"),
+        fila("3.5", "Gestió d'arxius i directoris"), fila("3.7", "Criteris d'indexació"),
+        fila("3.8", "Seguretat i integritat"), fila("DOC", "Memòria tècnica"),
+      ]},
+      F3: { nivellNoms: NIVELLS_DEF, files: [
+        fila("2.2", "Instal·lació i personalització"), fila("2.3", "Perfils i usuaris"),
+        fila("2.4", "Comunicació: fòrums i consultes"), fila("2.5", "Importació/exportació de continguts"),
+        fila("2.6", "Còpies de seguretat i restauracions"), fila("DOC", "Memòria tècnica"),
+      ]},
+      F4: { nivellNoms: NIVELLS_DEF, files: [
+        fila("2.7", "Informes d'accés i utilització"), fila("2.8/3.8", "Comprovació de seguretat"),
+        fila("MAN", "Manual d'usuari"), fila("DOC", "Evidències"),
+      ]},
+      F5: { nivellNoms: NIVELLS_DEF, files: [
+        fila("PRE", "Presentació al client"), fila("DEC", "Justificació de decisions"), fila("DOC", "Material de suport"),
+      ]},
+    },
+    avaluacions: { equip: {}, factors: {}, individual: {} },
+  };
+
+  /* ---- Repte 3 · Sortim al món (estructura preparada, sense notes) ---- */
+  const r3 = {
+    id: "r3", nom: "Repte 3 · Sortim al món", sub: "Presència pública amb gestor de continguts (CMS)",
+    trimestre: "3r trimestre", ras: ["RA1"],
+    equips: seedEquips(alumnes),
+    instruments: [
+      { id: "PV5", nom: "PV5 · Validació individual CMS", tipus: "individual", pes: { RA1: 30 }, minim: 4 },
+      { id: "G1", nom: "G1 · Informe i proposta tècnica", tipus: "equip", pes: { RA1: 10 }, minim: null },
+      { id: "G2", nom: "G2 · Desplegament del CMS", tipus: "equip", pes: { RA1: 25 }, minim: null },
+      { id: "G3", nom: "G3 · Mòduls, fòrums i seguretat", tipus: "equip", pes: { RA1: 15 }, minim: null },
+      { id: "G4", nom: "G4 · Presentació i defensa", tipus: "equip", pes: { RA1: 10 }, minim: null },
+      { id: "OBS", nom: "Observació · diari, rols i actitud", tipus: "individual", pes: { RA1: 10 }, minim: null },
+    ],
+    rubriques: {
+      G1: { nivellNoms: NIVELLS_DEF, files: [
+        fila("1.1", "Requeriments d'instal·lació identificats"), fila("CMP", "Comparativa de gestors de continguts"), fila("DOC", "Qualitat de l'informe"),
+      ]},
+      G2: { nivellNoms: NIVELLS_DEF, files: [
+        fila("1.1", "Instal·lació del gestor"), fila("1.2", "Usuaris amb rols diferents"),
+        fila("1.3", "Personalització de la interfície"), fila("1.4/1.9", "Proves de funcionament"), fila("DOC", "Memòria tècnica"),
+      ]},
+      G3: { nivellNoms: NIVELLS_DEF, files: [
+        fila("1.6", "Mòduls i menús necessaris"), fila("1.8", "Fòrums i regles d'accés"),
+        fila("1.5/1.7", "Actualitzacions i mecanismes de seguretat"), fila("1.10", "Còpies de seguretat dels continguts"), fila("DOC", "Memòria tècnica"),
+      ]},
+      G4: { nivellNoms: NIVELLS_DEF, files: [
+        fila("PRE", "Presentació al client"), fila("DEC", "Justificació de decisions"), fila("DOC", "Material de suport"),
+      ]},
+    },
+    avaluacions: { equip: {}, factors: {}, individual: {} },
+  };
+
+  const curs = {
+    id: uid(), modul: "MP8 · Aplicacions web", grup: "Grup demo",
+    config: {
+      factorsPermesos: [0.8, 0.9, 1.0, 1.1],
+      ras: [
+        { id: "RA1", nom: "Gestors de continguts", pes: 50, directe: false, mode: "reptes" },
+        { id: "RA2", nom: "Aprenentatge a distància", pes: 10, directe: false, mode: "reptes" },
+        { id: "RA3", nom: "Gestió d'arxius web", pes: 10, directe: false, mode: "reptes" },
+        { id: "RA4", nom: "Ofimàtica web", pes: 10, directe: false, mode: "reptes" },
+        { id: "RA5", nom: "Aplicacions web d'escriptori", pes: 10, directe: false, mode: "reptes" },
+        { id: "EMP", nom: "Estada a l'empresa", pes: 10, directe: true, mode: "directe" },
+      ],
+    },
+    alumnes,
+    reptes: [r1, r2, r3],
+    notesDirectes: {}, // { raId: { alumneId: nota } }
+    categoriesGenerals: [ // biblioteca de noms de categoria reutilitzables entre RA en mode "activitats"
+      { id: uid(), nom: "Exàmens" },
+      { id: uid(), nom: "Pràctiques" },
+      { id: uid(), nom: "Treballs" },
+    ],
+    activitatsRA: {}, // { raId: { categories:[{id,nom,pes,minim}], activitats:[{id,nom,categoriaId,tipus,classroomId,notes:{alId:val}}] } }
+    actual: "r1",
+  };
+  return { versio: 3, cursos: [curs], cursActual: curs.id, seguretat: { activat: false, hash: null, minutsInactivitat: null } };
+}
+/* Crea un curs (mòdul+grup) buit, per a "+ Nou curs". */
+function nouCursBuit(modul, grup) {
+  return {
+    id: uid(), modul: modul || "Mòdul nou", grup: grup || "Grup nou",
+    config: { factorsPermesos: [0.8, 0.9, 1.0, 1.1], ras: [] },
+    alumnes: [],
+    reptes: [{
+      id: uid(), nom: "Repte 1", sub: "", trimestre: "", ras: [],
+      equips: [],
+      instruments: [
+        { id: "PV", nom: "PV · Validació individual", tipus: "individual", pes: {}, minim: 4 },
+        { id: "OBS", nom: "Observació · diari, rols i actitud", tipus: "individual", pes: {}, minim: null },
+      ],
+      rubriques: {},
+      avaluacions: { equip: {}, factors: {}, individual: {} },
+    }],
+    notesDirectes: {},
+    categoriesGenerals: [{ id: uid(), nom: "Exàmens" }, { id: uid(), nom: "Pràctiques" }, { id: uid(), nom: "Treballs" }],
+    activitatsRA: {},
+    actual: null,
+  };
+}
+
+/* ---- migració des de la v1 (un sol repte) ---- */
+function migraV1(v1) {
+  const nou = deep(seed().cursos[0]);
+  nou.id = uid();
+  nou.alumnes = v1.alumnes.map(a => ({ id: a.id, nom: a.nom }));
+  const equips = v1.equips.map(e => ({ id: e.id, nom: e.nom, membres: v1.alumnes.filter(a => a.equipId === e.id).map(a => a.id) }));
+  const r1 = nou.reptes[0];
+  r1.equips = equips;
+  r1.instruments = v1.instruments;
+  r1.rubriques = v1.rubriques;
+  r1.avaluacions = v1.avaluacions;
+  // els reptes 2 i 3 de mostra queden amb els equips reals migrats
+  nou.reptes[1].equips = deep(equips).map(e => ({ ...e, id: uid() }));
+  nou.reptes[2].equips = deep(equips).map(e => ({ ...e, id: uid() }));
+  return nou; // curs pla; normalitza() l'embolicarà en el contenidor multicurs
+}
+
+/* ================= persistència =================
+   Quatre capes, per ordre de prioritat:
+   0) "gas":    servit com a aplicació web de Google Apps Script → el JSON es desa a Google Drive.
+   1) "claude": magatzem persistent de l'artefacte (quan s'executa dins de Claude).
+   2) "local":  fitxer local connectat amb la File System Access API (Chrome/Edge)
+                + còpia automàtica al localStorage del navegador.
+   3) "mem":    només memòria (últim recurs): exporta manualment. */
+const KEY = "gestor_avaluacio_mp8_v2";
+const KEY_V1 = "gestor_avaluacio_mp8_repte1_v1";
+let state = null;
+const C = () => state.cursos.find(c => c.id === state.cursActual);
+let saveTimer = null;
+let backend = "mem";            // "claude" | "local" | "mem"
+let fitxerHandle = null;        // FileSystemFileHandle del fitxer d'autoguardat
+let fitxerNom = null;
+let calReconnectar = false;     // hi ha un fitxer recordat pendent de permís
+const suportaFSA = typeof window.showSaveFilePicker === "function";
+const enGAS = typeof google !== "undefined" && google.script && google.script.run;
+function gasCrida(fn, ...args) {
+  return new Promise((res, rej) =>
+    google.script.run.withSuccessHandler(res).withFailureHandler(rej)[fn](...args));
+}
+
+function setEstat(mode, txt) {
+  const el = $("#estat-desat");
+  el.className = mode;
+  $("#estat-txt").textContent = txt;
+}
+
+/* --- IndexedDB: recorda el FileHandle entre sessions --- */
+function idb() {
+  return new Promise((res, rej) => {
+    const rq = indexedDB.open("gestor_mp8", 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore("kv");
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => rej(rq.error);
+  });
+}
+async function idbSet(k, v) { try { const db = await idb(); await new Promise((res, rej) => { const t = db.transaction("kv", "readwrite"); t.objectStore("kv").put(v, k); t.oncomplete = res; t.onerror = () => rej(t.error); }); } catch (e) {} }
+async function idbGet(k) { try { const db = await idb(); return await new Promise(res => { const t = db.transaction("kv", "readonly"); const rq = t.objectStore("kv").get(k); rq.onsuccess = () => res(rq.result ?? null); rq.onerror = () => res(null); }); } catch (e) { return null; } }
+async function idbDel(k) { try { const db = await idb(); await new Promise(res => { const t = db.transaction("kv", "readwrite"); t.objectStore("kv").delete(k); t.oncomplete = res; t.onerror = res; }); } catch (e) {} }
+
+async function llegeixClaude(clau) {
+  try { const r = await window.storage.get(clau); return r && r.value ? JSON.parse(r.value) : null; }
+  catch (e) { return null; }
+}
+function normalitza(dadesOriginal) {
+  if (!dadesOriginal) return null;
+  let dades = dadesOriginal;
+  if (dades.versio !== 2 && dades.versio !== 3 && dades.alumnes && dades.instruments) {
+    const curs = migraV1(dades);
+    dades = { versio: 3, cursos: [curs], cursActual: curs.id };
+  } else if (dades.versio === 2 || (!dades.versio && dades.config && dades.reptes)) {
+    // v2: un sol curs pla al nivell arrel → l'emboliquem en el contenidor multicurs
+    const curs = {
+      id: uid(), modul: "Mòdul", grup: "Grup 1",
+      config: dades.config, alumnes: dades.alumnes, reptes: dades.reptes,
+      notesDirectes: dades.notesDirectes || {}, categoriesGenerals: dades.categoriesGenerals, activitatsRA: dades.activitatsRA || {},
+      actual: dades.actual,
+    };
+    dades = { versio: 3, cursos: [curs], cursActual: curs.id };
+  }
+  // backfill de camps que poden faltar en desats de versions anteriors d'aquest fil
+  dades.cursos.forEach(c => {
+    if (!c.categoriesGenerals) c.categoriesGenerals = deep(seed().cursos[0].categoriesGenerals);
+    if (!c.activitatsRA) c.activitatsRA = {};
+    if (!c.modul) c.modul = "Mòdul";
+    if (!c.grup) c.grup = "Grup 1";
+    (c.config?.ras || []).forEach(ra => { if (!ra.mode) ra.mode = ra.directe ? "directe" : "reptes"; });
+  });
+  if (!dades.cursos.some(c => c.id === dades.cursActual)) dades.cursActual = dades.cursos[0]?.id;
+  if (!dades.seguretat) dades.seguretat = { activat: false, hash: null, minutsInactivitat: null };
+  return dades;
+}
+async function initStorage() {
+  // 0) aplicació web de Google Apps Script → Google Drive
+  if (enGAS) {
+    try {
+      const txt = await gasCrida("llegeixDades");
+      backend = "gas";
+      return normalitza(txt ? JSON.parse(txt) : null);
+    } catch (e) { /* seguim amb les altres capes */ }
+  }
+  // 1) dins de Claude
+  if (window.storage) {
+    try {
+      await window.storage.set(KEY + "_ping", "1");
+      backend = "claude";
+      return normalitza(await llegeixClaude(KEY) || await llegeixClaude(KEY_V1));
+    } catch (e) { /* seguim amb el mode local */ }
+  }
+  // 2) mode local: localStorage + fitxer recordat
+  backend = "local";
+  let dades = null;
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) dades = JSON.parse(raw);
+  } catch (e) { backend = "mem"; }
+  if (suportaFSA) {
+    const h = await idbGet("fitxer");
+    if (h) {
+      fitxerHandle = h; fitxerNom = h.name; calReconnectar = true;
+      try {
+        if (h.queryPermission && (await h.queryPermission({ mode: "readwrite" })) === "granted") {
+          calReconnectar = false;
+          const f = await h.getFile();
+          const txt = await f.text();
+          if (txt.trim()) dades = JSON.parse(txt);
+        }
+      } catch (e) { /* pendent de reconnexió manual */ }
+    }
+  }
+  return normalitza(dades);
+}
+function save() {
+  clearTimeout(saveTimer);
+  setEstat("saving", "Desant…");
+  saveTimer = setTimeout(async () => {
+    const on = [];
+    if (backend === "gas") {
+      try { await gasCrida("desaDades", JSON.stringify(state, null, 2)); on.push("a Google Drive"); } catch (e) {}
+    } else if (backend === "claude") {
+      try { await window.storage.set(KEY, JSON.stringify(state)); on.push("a Claude"); } catch (e) {}
+    } else {
+      try { localStorage.setItem(KEY, JSON.stringify(state)); if (backend === "local") on.push("al navegador"); } catch (e) {}
+      if (fitxerHandle && !calReconnectar) {
+        try {
+          const w = await fitxerHandle.createWritable();
+          await w.write(JSON.stringify(state, null, 2));
+          await w.close();
+          on.push("a «" + fitxerNom + "»");
+        } catch (e) { calReconnectar = true; }
+      }
+    }
+    if (on.length) setEstat("", "Desat " + on.join(" i "));
+    else setEstat("mem", "Mode memòria: exporta per no perdre res");
+  }, 500);
+}
+function mut(fn) { fn(); save(); render(); }
+
+/* --- fitxer local d'autoguardat --- */
+async function connectaFitxer() {
+  if (!suportaFSA) {
+    await alertModal("Aquest navegador no permet connectar fitxers (cal Chrome, Edge o un altre navegador basat en Chromium). Mentrestant, les dades es desen al navegador i pots exportar el JSON manualment.");
+    return;
+  }
+  try {
+    const h = await window.showSaveFilePicker({
+      suggestedName: "avaluacio_mp8.json",
+      types: [{ description: "Dades d'avaluació (JSON)", accept: { "application/json": [".json"] } }],
+    });
+    fitxerHandle = h; fitxerNom = h.name; calReconnectar = false;
+    await idbSet("fitxer", h);
+    save(); render();
+  } catch (e) { /* selector cancel·lat */ }
+}
+async function reconnectaFitxer() {
+  if (!fitxerHandle) return;
+  try {
+    if ((await fitxerHandle.requestPermission({ mode: "readwrite" })) !== "granted") return;
+    calReconnectar = false;
+    try {
+      const f = await fitxerHandle.getFile();
+      const txt = await f.text();
+      if (txt.trim()) {
+        const dades = normalitza(JSON.parse(txt));
+        if (dades && JSON.stringify(dades) !== JSON.stringify(state)
+            && await confirmModal("El fitxer «" + fitxerNom + "» conté dades. Vols carregar-les? (Cancel·la per mantenir les dades d'ara i sobreescriure el fitxer)")) {
+          state = dades;
+          if (!C().reptes.some(r => r.id === C().actual)) C().actual = C().reptes[0].id;
+        }
+      }
+    } catch (e) {}
+    save(); render();
+  } catch (e) {}
+}
+async function desconnectaFitxer() {
+  fitxerHandle = null; fitxerNom = null; calReconnectar = false;
+  await idbDel("fitxer");
+  save(); render();
+}
+
+/* ================= accés a l'estat ================= */
+const R = () => C().reptes.find(r => r.id === C().actual) || C().reptes[0];
+const alumne = id => C().alumnes.find(a => a.id === id);
+const raConf = id => C().config.ras.find(r => r.id === id);
+/* Els RA només tenen nom de cara a l'usuari: l'id és una clave interna que no es mostra mai. */
+const raNom = id => (raConf(id) || {}).nom || "RA";
+const escurca = (t, n) => (t || "").length > n ? (t || "").slice(0, n - 1) + "…" : (t || "");
+const equipDe = (rep, id) => rep.equips.find(e => e.id === id);
+const instrDe = (rep, id) => rep.instruments.find(i => i.id === id);
+const equipAlumne = (rep, alId) => rep.equips.find(e => e.membres.includes(alId));
+const raMode = ra => ra?.mode || (ra?.directe ? "directe" : "reptes"); // "reptes" | "activitats" | "directe"
+
+/* ================= càlculs ================= */
+function notaEquip(rep, instrId, equipId) {
+  const reg = rep.avaluacions.equip[instrId]?.[equipId];
+  const rub = rep.rubriques[instrId];
+  if (!reg || !rub || !rub.files.length || !reg.nivells) return null;
+  let suma = 0;
+  for (let i = 0; i < rub.files.length; i++) {
+    const v = reg.nivells[i];
+    if (v === null || v === undefined) return null;
+    suma += v;
+  }
+  return (suma / (3 * rub.files.length)) * 10;
+}
+const factorDe = (rep, instrId, alId) => rep.avaluacions.factors[instrId]?.[alId] ?? 1.0;
+function notaIndividual(rep, instrId, alId) {
+  const ins = instrDe(rep, instrId);
+  if (!ins) return null;
+  if (ins.tipus === "individual") {
+    const v = rep.avaluacions.individual[instrId]?.[alId];
+    return (v === null || v === undefined || v === "") ? null : Number(v);
+  }
+  const eq = equipAlumne(rep, alId);
+  if (!eq) return null;
+  const ne = notaEquip(rep, instrId, eq.id);
+  if (ne === null) return null;
+  return Math.min(10, ne * factorDe(rep, instrId, alId));
+}
+function notaRARepte(rep, alId, ra) {
+  let pesTot = 0, pesAval = 0, sumaAval = 0, pendent = false, minimPendentAval = false;
+  for (const ins of rep.instruments) {
+    const p = Number(ins.pes[ra]) || 0;
+    if (p <= 0) continue;
+    pesTot += p;
+    const n = notaIndividual(rep, ins.id, alId);
+    if (n !== null) {
+      pesAval += p; sumaAval += p * n;
+      if (ins.minim != null && n < ins.minim) pendent = true;
+    } else if (ins.minim != null) minimPendentAval = true;
+  }
+  if (pesAval === 0) return { nota: null, completa: false, pendent: false };
+  return { nota: sumaAval / pesAval, completa: pesAval >= pesTot && !minimPendentAval, pendent };
+}
+/* ---- càlculs per a RA en mode "activitats" (categories ponderades) ---- */
+function valorActivitat(act, alId) {
+  const v = act.notes[alId];
+  if (v === undefined || v === null || v === "") return null;
+  return act.tipus === "fetnofet" ? (v ? 10 : 0) : Number(v);
+}
+function notaCategoria(cat, activitats, alId) {
+  const rellevants = activitats.filter(a => a.categoriaId === cat.id);
+  if (!rellevants.length) return { nota: null, completa: false };
+  const valors = rellevants.map(a => valorActivitat(a, alId)).filter(v => v !== null);
+  if (!valors.length) return { nota: null, completa: false };
+  return { nota: valors.reduce((s, v) => s + v, 0) / valors.length, completa: valors.length === rellevants.length };
+}
+function notaRAActivitats(raId, alId) {
+  const dades = C().activitatsRA[raId];
+  if (!dades || !dades.categories.length) return { nota: null, completa: false, pendent: false };
+  let pesTot = 0, pesAval = 0, suma = 0, pendent = false, completa = true;
+  for (const cat of dades.categories) {
+    const p = Number(cat.pes) || 0;
+    if (p <= 0) continue;
+    pesTot += p;
+    const { nota, completa: catCompleta } = notaCategoria(cat, dades.activitats, alId);
+    if (nota === null) { completa = false; continue; }
+    pesAval += p; suma += p * nota;
+    if (!catCompleta) completa = false;
+    if (cat.minim != null && nota < cat.minim) pendent = true;
+  }
+  if (pesAval === 0) return { nota: null, completa: false, pendent: false };
+  return { nota: suma / pesAval, completa: completa && pesAval >= pesTot, pendent };
+}
+function notaRAModul(alId, raId) {
+  const ra = raConf(raId);
+  const mode = raMode(ra);
+  if (mode === "directe") {
+    const v = C().notesDirectes[raId]?.[alId];
+    return { nota: (v === null || v === undefined || v === "") ? null : Number(v), completa: v !== undefined && v !== null && v !== "", pendent: false, reptes: [] };
+  }
+  if (mode === "activitats") {
+    return { ...notaRAActivitats(raId, alId), reptes: [] };
+  }
+  const reps = C().reptes.filter(r => r.ras.includes(raId));
+  if (!reps.length) return { nota: null, completa: false, pendent: false, reptes: [] };
+  const parts = reps.map(r => notaRARepte(r, alId, raId));
+  const ambNota = parts.filter(p => p.nota !== null);
+  if (!ambNota.length) return { nota: null, completa: false, pendent: false, reptes: reps };
+  return {
+    nota: ambNota.reduce((s, p) => s + p.nota, 0) / ambNota.length,
+    completa: ambNota.length === parts.length && parts.every(p => p.completa),
+    pendent: parts.some(p => p.pendent),
+    reptes: reps,
+  };
+}
+function notaModul(alId) {
+  let pesAval = 0, suma = 0, pesTot = 0, pendent = false, completa = true;
+  for (const ra of C().config.ras) {
+    const p = Number(ra.pes) || 0;
+    if (p <= 0) continue;
+    pesTot += p;
+    const x = notaRAModul(alId, ra.id);
+    if (x.pendent) pendent = true;
+    if (x.nota !== null) { pesAval += p; suma += p * x.nota; if (!x.completa) completa = false; }
+    else completa = false;
+  }
+  if (pesAval === 0) return { nota: null, completa: false, pendent: false };
+  return { nota: suma / pesAval, completa: completa && pesAval >= pesTot, pendent };
+}
+
+/* ================= navegació =================
+   Barra lateral permanent i sempre contextual al grup-aula actiu:
+     Grups-aula (llista completa) · Grup-aula (Avaluar/Resultats/Contingut/Alumnat/Configuració) · General
+   Principi de disseny: "Avaluar" és l'únic lloc on es posen notes; "Contingut" és l'únic lloc
+   on es defineix l'estructura. Així no hi ha dos camins cap a la mateixa cosa.
+   "vista": "avaluar" | "resultats" | "contingut" | "alumnat" | "config" | "seguretat" | "dades"
+            | "repte:<id>" | "ra:<raId>"   (aquestes dues són pàgines de muntatge, dins Contingut) */
+const SUB_REPTE = [
+  { id: "tauler", nom: "Tauler" },
+  { id: "equips", nom: "Equips" },
+  { id: "ponderacio", nom: "Entregables" },
+  { id: "rubriques", nom: "Rúbriques" },
+  { id: "configuracio", nom: "Dades del repte" },
+];
+const SUB_RA = [
+  { id: "categories", nom: "Categories" },
+  { id: "activitats", nom: "Activitats" },
+];
+const VISTES_GRUP = [
+  { id: "avaluar", ic: "◎", nom: "Avaluar" },
+  { id: "resultats", ic: "Σ", nom: "Notes del mòdul" },
+  { id: "contingut", ic: "▤", nom: "Contingut" },
+  { id: "alumnat", ic: "◉", nom: "Alumnat" },
+  { id: "config", ic: "⚙", nom: "Configuració" },
+];
+let vista = null;
+let subRepte = "tauler";
+let subRA = "categories";
+let selInstrument = null;
+let selRubrica = null;
+let avaluaRASel = null;            // RA triat a la pàgina Avaluar
+let avaluaRepteSel = null;         // repte triat quan l'RA es treballa a més d'un
+let filtreContingutsRA = "";
+let cercaContinguts = "";
+
+function nav() {
+  $("#nav-grups").innerHTML = state.cursos.map(c => `
+    <button class="tab curs ${c.id === state.cursActual ? "on" : ""}" onclick="canviaCurs('${c.id}')">
+      <span class="k">◆</span><span class="tabtxt"><span class="tabnom">${esc(c.modul)}</span><span class="tabsub">${esc(c.grup)}</span></span>
+    </button>`).join("") + `<button class="tab afegeix" onclick="nouCurs()"><span class="k">+</span>Nou grup-aula</button>`
+    + (enGAS ? `<button class="tab afegeix" onclick="nouCursDesDeClassroom()"><span class="k">⇩</span>Des de Classroom</button>` : "");
+  // "Contingut" es manté marcat mentre s'és a la pàgina d'un repte o d'un RA (hi pengen d'ell)
+  const dins = vista && (vista.startsWith("repte:") || vista.startsWith("ra:")) ? "contingut"
+    : (vista && vista.startsWith("alumne:")) ? "alumnat" : vista;
+  $("#nav-grup").innerHTML = VISTES_GRUP.map(v =>
+    `<button class="tab ${dins === v.id ? "on" : ""}" onclick="anar('${v.id}')"><span class="k">${v.ic}</span>${v.nom}</button>`).join("");
+  $("#nav-general").innerHTML = [
+    { id: "seguretat", ic: "🔒", nom: "Seguretat" },
+    { id: "dades", ic: "⇅", nom: "Dades" },
+  ].map(v => `<button class="tab ${vista === v.id ? "on" : ""}" onclick="anar('${v.id}')"><span class="k">${v.ic}</span>${v.nom}</button>`).join("");
+}
+function anar(v) { vista = v; render(); window.scrollTo(0, 0); }
+function anarSub(v) {
+  if (vista.startsWith("repte:")) subRepte = v; else subRA = v;
+  render(); window.scrollTo(0, 0);
+}
+/* Les pàgines de muntatge pengen de Contingut: la molla hi torna. */
+function crumbGrup(label) {
+  return `<div class="crumb"><a href="javascript:void(0)" onclick="anar('contingut')">Contingut</a>${label ? " › " + esc(label) : ""}</div>`;
+}
+/* Des de Resultats es pot saltar a avaluar un RA concret. */
+function avaluaRA(raId) { avaluaRASel = raId; avaluaRepteSel = null; anar("avaluar"); }
+
+/* ---- crear una activitat directament des de Contingut ---- */
+async function novaActivitatDesDeContinguts() {
+  const rasAct = C().config.ras.filter(ra => raMode(ra) === "activitats");
+  if (!rasAct.length) { await alertModal("Encara no hi ha cap RA en mode «Activitats». Canvia'n un a Configuració."); return; }
+  let raId = rasAct[0].id;
+  if (rasAct.length > 1) {
+    const tria = await selectModal("A quin RA vols afegir l'activitat?",
+      rasAct.map(r => ({ valor: r.id, etiqueta: r.nom })));
+    if (!tria) return;
+    raId = tria;
+  }
+  const d = C().activitatsRA[raId];
+  if (!d.categories.length) { await alertModal("Aquest RA encara no té categories: se'n crearà una per defecte."); mut(() => d.categories.push({ id: uid(), nom: "General", pes: 100, minim: null })); }
+  novaActivitat(raId);
+  subRA = "activitats";
+  anar("ra:" + raId);
+}
+
+/* ================= Avaluar: l'únic lloc on es posen notes ================= */
+function vAvaluarHub() {
+  const c = C();
+  const ras = c.config.ras;
+  if (!ras.length) {
+    return `<h1>Avaluar</h1>
+      <div class="avis">Aquest mòdul encara no té cap RA. Afegeix-ne a <a href="javascript:void(0)" onclick="anar('config')">Configuració</a>.</div>`;
+  }
+  if (!ras.some(r => r.id === avaluaRASel)) avaluaRASel = ras[0].id;
+  const ra = raConf(avaluaRASel);
+  const mode = raMode(ra);
+  const reps = mode === "reptes" ? c.reptes.filter(r => r.ras.includes(avaluaRASel)) : [];
+  if (mode === "reptes" && !reps.some(r => r.id === avaluaRepteSel)) avaluaRepteSel = reps[0]?.id ?? null;
+
+  const selectorRA = `
+    <div class="toolrow" style="margin-bottom:18px">
+      <label class="tiny soft">RA</label>
+      <select onchange="avaluaRASel=this.value;avaluaRepteSel=null;render()" style="max-width:320px">
+        ${ras.map(r => `<option value="${esc(r.id)}" ${r.id === avaluaRASel ? "selected" : ""}>${esc(r.nom)}</option>`).join("")}
+      </select>
+      ${mode === "reptes" && reps.length ? `
+        <label class="tiny soft">Repte</label>
+        <select onchange="avaluaRepteSel=this.value;render()" style="max-width:300px">
+          ${reps.map(r => `<option value="${r.id}" ${r.id === avaluaRepteSel ? "selected" : ""}>${esc(r.nom)}</option>`).join("")}
+        </select>` : ""}
+      <span class="badge ${mode === "reptes" ? "b-blau" : mode === "activitats" ? "b-verd" : "b-ambre"}">${mode === "reptes" ? "Reptes" : mode === "activitats" ? "Activitats" : "Nota directa"}</span>
+    </div>`;
+
+  let cos;
+  if (mode === "directe") cos = cosNotaDirecta(avaluaRASel);
+  else if (mode === "activitats") cos = vAvaluarActivitats(avaluaRASel);
+  else if (!reps.length) cos = `<div class="avis roig">Cap repte treballa ${esc(avaluaRASel)}. Assigna-l'hi des de <a href="javascript:void(0)" onclick="anar('contingut')">Contingut</a>.</div>`;
+  else {
+    // vAvaluar() treballa sobre el repte actiu (R()), així que el fixem abans de dibuixar-lo
+    const rep = c.reptes.find(r => r.id === avaluaRepteSel);
+    c.actual = rep.id;
+    if (!rep.instruments.some(i => i.id === selInstrument)) selInstrument = rep.instruments[0]?.id ?? null;
+    cos = vAvaluar();
+  }
+
+  return `<h1>Avaluar</h1>${selectorRA}${cos}`;
+}
+function cosNotaDirecta(raId) {
+  return `
+  <p class="lead">Aquest RA no té reptes ni activitats: la nota s'introdueix directament per a cada alumne.</p>
+  <div class="card" style="max-width:480px">
+    <table>
+      <tr><th>Alumne/a</th><th class="num" style="width:110px">Nota (0–10)</th></tr>
+      ${C().alumnes.map(al => { const v = C().notesDirectes[raId]?.[al.id];
+        return `<tr><td>${esc(al.nom)}</td><td class="num"><input class="nota" type="number" min="0" max="10" step="0.1" value="${v ?? ""}"
+          onchange="posaDirecta('${raId}','${al.id}',this.value)"></td></tr>`; }).join("")}
+    </table>
+  </div>`;
+}
+
+/* ================= Resultats: lectura, mai edició d'instruments ================= */
+function vResultats() {
+  const c = C();
+  const ras = c.config.ras;
+  return `
+  <h1>Notes del mòdul</h1>
+  <p class="lead">Notes calculades per alumne i RA, i nota final del mòdul. Les notes amb <b>*</b> són provisionals; <span class="nota-final pend">⚑</span> vol dir mínim no assolit. Per posar notes, ves a <a href="javascript:void(0)" onclick="anar('avaluar')">Avaluar</a>.</p>
+  ${!ras.length ? `<div class="avis">Aquest mòdul encara no té cap RA.</div>` : `
+  <div class="card" style="overflow-x:auto">
+    <div class="toolrow"><h2 style="margin:0">Notes per alumne</h2><span class="spacer"></span>
+      <button class="btn" onclick="exportaCSVModul()">Exporta CSV</button></div>
+    <table>
+      <tr><th class="sticky-nom">Alumne/a</th>${ras.map(ra => `<th class="num cap-ra-res" title="${esc(ra.nom)}">${esc(escurca(ra.nom, 18))}</th>`).join("")}<th class="num">Mòdul</th></tr>
+      ${c.alumnes.map(al => `<tr>
+        <td class="sticky-nom"><a class="nom-clic" onclick="anar('alumne:${al.id}')" title="Veure la fitxa de ${esc(al.nom)}">${esc(al.nom)}</a></td>
+        ${ras.map(ra => {
+          const x = notaRAModul(al.id, ra.id);
+          if (x.nota === null) return `<td class="num mut">—</td>`;
+          const cls = x.pendent ? "pend" : (!x.completa ? "prov" : "");
+          return `<td class="num"><span class="nota-final ${cls}">${fmt(x.nota)}${x.pendent ? " ⚑" : (!x.completa ? " *" : "")}</span></td>`;
+        }).join("")}
+        ${(() => { const m = notaModul(al.id);
+          if (m.nota === null) return `<td class="num mut">—</td>`;
+          const cls = m.pendent ? "pend" : (!m.completa ? "prov" : "");
+          return `<td class="num"><span class="nota-final ${cls}" style="font-size:16px">${fmt(m.nota)}${m.pendent ? " ⚑" : (!m.completa ? " *" : "")}</span></td>`; })()}
+      </tr>`).join("")}
+    </table>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <h2>Com s'avalua cada RA</h2>
+    <table style="max-width:920px">
+      <tr><th colspan="2">Resultat d'aprenentatge</th><th>Treballat a</th><th class="num" style="width:70px">Pes</th><th style="width:90px"></th></tr>
+      ${ras.map(ra => {
+        const mode = raMode(ra);
+        const reps = mode === "reptes" ? c.reptes.filter(r => r.ras.includes(ra.id)) : [];
+        const desc = mode === "directe" ? "Nota directa"
+          : mode === "activitats" ? "Categories i activitats"
+          : (reps.map(r => `<a href="javascript:void(0)" onclick="anar('repte:${r.id}')">${esc(r.nom)}</a>`).join(" + ") || "Cap repte assignat ⚠");
+        return `<tr>
+          <td colspan="2"><b>${esc(ra.nom)}</b></td>
+          <td class="tiny ${mode === "reptes" && !reps.length ? "ko" : "soft"}">${desc}</td>
+          <td class="num tiny">${ra.pes}%</td>
+          <td><button class="btn mini" onclick="avaluaRA('${ra.id}')">Avalua</button></td>
+        </tr>`;
+      }).join("")}
+    </table>
+  </div>`}`;
+}
+
+/* ================= Contingut: l'únic lloc on es defineix l'estructura ================= */
+function itemsContinguts() {
+  const c = C();
+  return [
+    ...c.reptes.map(r => ({ tipus: "repte", id: r.id, nom: r.nom, ras: r.ras, sub: (r.trimestre || "Repte") + (r.ras.length ? " · " + r.ras.join(", ") : " · cap RA assignat") })),
+    ...c.config.ras.filter(ra => raMode(ra) !== "reptes").map(ra => {
+      let sub;
+      if (raMode(ra) === "activitats") {
+        const d = c.activitatsRA[ra.id] || { categories: [], activitats: [] };
+        const esb = d.activitats.filter(a => a.esborrany).length;
+        sub = `${d.activitats.length} activitats, ${d.categories.length} categories` + (esb ? ` · ${esb} en esborrany` : "");
+      } else sub = `Nota directa`;
+      return { tipus: raMode(ra), id: ra.id, nom: ra.nom, ras: [ra.id], sub };
+    }),
+  ].filter(it => (!filtreContingutsRA || it.ras.includes(filtreContingutsRA))
+    && (!cercaContinguts.trim() || (it.nom + " " + it.sub).toLowerCase().includes(cercaContinguts.trim().toLowerCase())));
+}
+function filtraContinguts(el) {
+  cercaContinguts = el.value;
+  const pos = el.selectionStart;
+  render();
+  const nouEl = $("#cerca-continguts");
+  if (nouEl) { nouEl.focus(); nouEl.setSelectionRange(pos, pos); }
+}
+function vContingut() {
+  const c = C();
+  const items = itemsContinguts();
+  const reptes = items.filter(i => i.tipus === "repte");
+  const blocsRA = items.filter(i => i.tipus !== "repte");
+  const graella = llista => `<div class="tiles">${llista.map(it => `
+    <button class="tile" onclick="anar('${it.tipus === "repte" ? "repte:" : "ra:"}${it.id}')">
+      <span class="tile-ic">${it.tipus === "repte" ? "◫" : it.tipus === "activitats" ? "▤" : "●"}</span>
+      <span class="tile-txt"><b>${esc(it.nom)}</b><span>${esc(it.sub)}</span></span></button>`).join("")}</div>`;
+  return `
+  <h1>Contingut</h1>
+  <p class="lead">Aquí es defineix l'estructura: reptes (equips, entregables i rúbriques) i RA avaluats amb activitats. Les notes es posen a <a href="javascript:void(0)" onclick="anar('avaluar')">Avaluar</a>.</p>
+  <div class="toolrow">
+    <select onchange="filtreContingutsRA=this.value;render()">
+      <option value="">Tots els RA</option>
+      ${c.config.ras.map(ra => `<option value="${esc(ra.id)}" ${filtreContingutsRA === ra.id ? "selected" : ""}>${esc(ra.nom)}</option>`).join("")}
+    </select>
+    <input id="cerca-continguts" class="inline" type="text" placeholder="Cerca pel nom…" value="${esc(cercaContinguts)}" style="max-width:220px" oninput="filtraContinguts(this)">
+    <span class="spacer"></span>
+    <button class="btn" onclick="novaActivitatDesDeContinguts()">+ Nova activitat</button>
+    <button class="btn pri" onclick="nouRepte()">+ Nou repte</button>
+  </div>
+  ${reptes.length ? `<div class="card"><h2>Reptes</h2>${graella(reptes)}</div>` : ""}
+  ${blocsRA.length ? `<div class="card"><h2>RA amb activitats o nota directa</h2>${graella(blocsRA)}</div>` : ""}
+  ${!items.length ? '<div class="avis">Cap resultat amb aquest filtre o cerca.</div>' : ""}`;
+}
+function vAlumnatPag() {
+  return `<h1>Alumnat</h1>
+  <p class="lead">La llista d'alumnes és única per a aquest grup-aula; l'assignació a equips es fa dins de cada repte. En eliminar un alumne s'esborren les seves notes de tots els reptes.</p>
+  ${blocAlumnat(C())}`;
+}
+/* ================= Fitxa d'un alumne: totes les notes, organitzades per RA ================= */
+function vFitxaAlumne(alId) {
+  const c = C();
+  const al = alumne(alId);
+  if (!al) { vista = "alumnat"; return vAlumnatPag(); }
+  const m = notaModul(alId);
+  const i = c.alumnes.findIndex(x => x.id === alId);
+  const ant = c.alumnes[i - 1], seg = c.alumnes[i + 1];
+  return `
+  <div class="crumb"><a href="javascript:void(0)" onclick="anar('alumnat')">Alumnat</a> › Fitxa</div>
+  <div class="toolrow" style="margin-bottom:6px">
+    <h1 style="margin:0">${esc(al.nom)}</h1>
+    <span class="spacer"></span>
+    <button class="btn mini" ${ant ? `onclick="anar('alumne:${ant.id}')"` : "disabled"} title="${ant ? esc(ant.nom) : ""}">‹ Anterior</button>
+    <select onchange="anar('alumne:'+this.value)" style="max-width:220px">
+      ${c.alumnes.map(x => `<option value="${x.id}" ${x.id === alId ? "selected" : ""}>${esc(x.nom)}</option>`).join("")}
+    </select>
+    <button class="btn mini" ${seg ? `onclick="anar('alumne:${seg.id}')"` : "disabled"} title="${seg ? esc(seg.nom) : ""}">Següent ›</button>
+  </div>
+
+  <div class="fitxa-resum">
+    <div class="fitxa-nota ${colorNota(m.nota)}">
+      <div class="tiny soft">Nota del mòdul</div>
+      <div class="gran">${m.nota === null ? "—" : fmt(m.nota)}${m.pendent ? " ⚑" : (!m.completa && m.nota !== null ? " *" : "")}</div>
+      <div class="tiny mut">${m.pendent ? "Pendent: hi ha un mínim no assolit" : (!m.completa && m.nota !== null ? "Provisional: falten notes" : (m.nota === null ? "Sense notes encara" : "Completa"))}</div>
+    </div>
+    <div class="fitxa-ras">
+      ${c.config.ras.map(ra => {
+        const x = notaRAModul(alId, ra.id);
+        return `<button class="fitxa-chip ${colorNota(x.nota)}" onclick="document.getElementById('ra-${esc(ra.id)}').scrollIntoView({behavior:'smooth',block:'start'})" title="Ves a ${esc(ra.nom)}">
+          <b title="${esc(ra.nom)}">${esc(escurca(ra.nom, 14))}</b><span>${x.nota === null ? "—" : fmt(x.nota)}${x.pendent ? " ⚑" : (!x.completa && x.nota !== null ? " *" : "")}</span>
+          <i class="tiny mut">${ra.pes}%</i></button>`;
+      }).join("") || '<span class="tiny mut">Aquest mòdul encara no té cap RA.</span>'}
+    </div>
+  </div>
+
+  ${c.config.ras.map(ra => detallRAAlumne(ra, alId)).join("")}`;
+}
+function detallRAAlumne(ra, alId) {
+  const c = C(), mode = raMode(ra), x = notaRAModul(alId, ra.id);
+  const cap = `
+    <div class="toolrow" style="margin:0 0 4px">
+      <h2 style="margin:0">${esc(ra.nom)}</h2>
+      <span class="spacer"></span>
+      <span class="tiny mut">pes al mòdul ${ra.pes}%</span>
+      <span class="nota-final ${x.pendent ? "pend" : (!x.completa ? "prov" : "")}" style="font-size:16px">${x.nota === null ? "—" : fmt(x.nota)}${x.pendent ? " ⚑" : (!x.completa && x.nota !== null ? " *" : "")}</span>
+      <button class="btn mini" onclick="avaluaRA('${ra.id}')">Avalua</button>
+    </div>`;
+  let cos;
+  if (mode === "directe") {
+    const v = c.notesDirectes[ra.id]?.[alId];
+    cos = `<p class="tiny mut">Nota directa: ${v === undefined || v === "" ? "encara no posada" : `<b>${fmt(Number(v))}</b>`}</p>`;
+  } else if (mode === "activitats") {
+    const d = c.activitatsRA[ra.id] || { categories: [], activitats: [] };
+    if (!d.categories.length) cos = '<p class="tiny mut">Aquest RA encara no té categories.</p>';
+    else cos = d.categories.map(cat => {
+      const nc = notaCategoria(cat, d.activitats, alId);
+      const acts = d.activitats.filter(a => a.categoriaId === cat.id);
+      const sotaMinim = cat.minim != null && nc.nota !== null && nc.nota < cat.minim;
+      return `
+      <div class="fitxa-blocs">
+        <div class="fitxa-bloc-cap">
+          <b>${esc(cat.nom)}</b>
+          <span class="tiny mut">${cat.pes}%${cat.minim != null ? ` · mínim ${fmt(cat.minim)}` : ""}</span>
+          <span class="spacer"></span>
+          <span class="nota-final ${sotaMinim ? "pend" : (!nc.completa && nc.nota !== null ? "prov" : "")}">${nc.nota === null ? "—" : fmt(nc.nota)}${sotaMinim ? " ⚑" : (!nc.completa && nc.nota !== null ? " *" : "")}</span>
+        </div>
+        ${!acts.length ? '<p class="tiny mut" style="padding:6px 0">Cap activitat en aquesta categoria.</p>' : `
+        <table class="fitxa-taula">
+          ${acts.map(a => {
+            const v = valorActivitat(a, alId);
+            const brut = a.notes[alId];
+            return `<tr>
+              <td>${esc(a.nom)}${a.esborrany ? ' <span class="badge b-draft">esborrany</span>' : ""}${a.rubrica ? ' <span class="badge b-verd">rúbrica</span>' : ""}</td>
+              <td class="num" style="width:110px">${v === null ? '<span class="mut">sense nota</span>'
+                : (a.tipus === "fetnofet" ? (brut ? '<span class="badge b-verd">Fet</span>' : '<span class="badge b-roig">No fet</span>')
+                   : `<span class="nota-final ${colorNota(v)}" style="padding:2px 7px;border-radius:5px">${fmt(v)}</span>`)}</td>
+            </tr>`;
+          }).join("")}
+        </table>`}
+      </div>`;
+    }).join("");
+  } else {
+    const reps = c.reptes.filter(r => r.ras.includes(ra.id));
+    if (!reps.length) cos = '<div class="avis roig">Cap repte treballa aquest RA.</div>';
+    else cos = reps.map(rep => {
+      const nr = notaRARepte(rep, alId, ra.id);
+      const eq = equipAlumne(rep, alId);
+      const instr = rep.instruments.filter(ins => (Number(ins.pes[ra.id]) || 0) > 0);
+      return `
+      <div class="fitxa-blocs">
+        <div class="fitxa-bloc-cap">
+          <b><a href="javascript:void(0)" onclick="anar('repte:${rep.id}')">${esc(rep.nom)}</a></b>
+          <span class="tiny mut">${eq ? "equip: " + esc(eq.nom) : "sense equip"}</span>
+          <span class="spacer"></span>
+          <span class="nota-final ${nr.pendent ? "pend" : (!nr.completa && nr.nota !== null ? "prov" : "")}">${nr.nota === null ? "—" : fmt(nr.nota)}${nr.pendent ? " ⚑" : (!nr.completa && nr.nota !== null ? " *" : "")}</span>
+        </div>
+        ${!instr.length ? '<p class="tiny mut" style="padding:6px 0">Cap instrument amb pes en aquest RA.</p>' : `
+        <table class="fitxa-taula">
+          ${instr.map(ins => {
+            const n = notaIndividual(rep, ins.id, alId);
+            const sotaMinim = ins.minim != null && n !== null && n < ins.minim;
+            const f = ins.tipus === "equip" ? factorDe(rep, ins.id, alId) : null;
+            return `<tr>
+              <td>${esc(ins.nom)} <span class="tiny mut">· ${ins.pes[ra.id]}%${ins.minim != null ? ` · mínim ${fmt(ins.minim)}` : ""}${f != null && f !== 1 ? ` · factor ${f}` : ""}</span></td>
+              <td class="num" style="width:110px">${n === null ? '<span class="mut">sense nota</span>'
+                : `<span class="nota-final ${colorNota(n)}" style="padding:2px 7px;border-radius:5px">${fmt(n)}</span>${sotaMinim ? ' <span title="Per sota del mínim">⚑</span>' : ""}`}</td>
+            </tr>`;
+          }).join("")}
+        </table>`}
+      </div>`;
+    }).join("");
+  }
+  return `<div class="card" id="ra-${esc(ra.id)}">${cap}${cos}</div>`;
+}
+
+function vConfigGrup() {
+  const c = C();
+  return `<h1>Configuració</h1>
+  <p class="lead">Identitat del grup-aula i resultats d'aprenentatge del mòdul (nom, pes i com s'avalua cadascun).</p>
+  ${blocIdentitatCurs(c)}
+  ${blocRAModul(c)}`;
+}
+
+function blocIdentitatCurs(c) {
+  return `
+  <div class="card" style="max-width:640px">
+    <h2>Aquest grup-aula</h2>
+    <div class="toolrow" style="margin-bottom:10px">
+      <input class="inline" style="max-width:280px;font-family:'Archivo';font-weight:700;font-size:15px" type="text" value="${esc(c.modul)}" placeholder="Mòdul"
+        onchange="mut(()=>{C().modul=this.value.trim()||'Mòdul'})">
+      <input class="inline" style="max-width:180px" type="text" value="${esc(c.grup)}" placeholder="Grup"
+        onchange="mut(()=>{C().grup=this.value.trim()||'Grup'})">
+    </div>
+    ${enGAS ? `<div class="toolrow" style="margin-bottom:10px">
+      <button class="btn pri" onclick="sincronitzaClassroom()">⟳ Sincronitza amb Classroom</button>
+      <span class="tiny mut">${c.classroomCourseId ? "Porta els canvis de Classroom: alumnes, temes, activitats i notes." : "Encara no està vinculat a cap curs de Classroom."}</span>
+    </div>` : ""}
+    <div class="toolrow">
+      <button class="btn" onclick="duplicaCurs('${c.id}')">Duplica per a un altre grup-aula</button>
+      ${state.cursos.length > 1 ? `<button class="btn peril" onclick="esborraCurs('${c.id}')">Esborra aquest grup-aula</button>` : ""}
+    </div>
+  </div>`;
+}
+function blocRAModul(c) {
+  const ras = c.config.ras;
+  const sumaPes = ras.reduce((s, r) => s + (Number(r.pes) || 0), 0);
+  return `
+  <div class="card" style="overflow-x:auto">
+    <div class="toolrow"><h2 style="margin:0">RA del mòdul</h2><span class="spacer"></span>
+      <button class="btn pri" onclick="afegeixRA()">+ Afegeix RA</button></div>
+    ${!ras.length ? '<p class="mut tiny">Aquest mòdul encara no té cap RA.</p>' : `
+    <table style="max-width:980px">
+      <tr><th>Resultat d'aprenentatge</th><th style="width:140px">Mode</th><th>Treballat a</th><th class="num" style="width:90px">Pes</th><th style="width:70px"></th></tr>
+      ${ras.map((ra, i) => {
+        const mode = raMode(ra);
+        const reps = mode === "reptes" ? c.reptes.filter(r => r.ras.includes(ra.id)) : [];
+        const desc = mode === "directe" ? `Nota directa a <a href="javascript:void(0)" onclick="anar('ra:${ra.id}')">la seva pàgina</a>`
+          : mode === "activitats" ? `Categories i activitats a <a href="javascript:void(0)" onclick="anar('ra:${ra.id}')">la seva pàgina</a>`
+          : (reps.map(r => `<a href="javascript:void(0)" onclick="anar('repte:${r.id}')">${esc(r.nom)}</a>`).join(" + ") || "Cap repte ⚠");
+        return `<tr>
+          <td><input class="inline" type="text" value="${esc(ra.nom)}" onchange="mut(()=>{C().config.ras[${i}].nom=this.value.trim()||'Resultat d\'aprenentatge'})"></td>
+          <td><select onchange="canviaModeRA('${ra.id}',this.value)">
+            <option value="reptes" ${mode === "reptes" ? "selected" : ""}>Reptes</option>
+            <option value="activitats" ${mode === "activitats" ? "selected" : ""}>Activitats</option>
+            <option value="directe" ${mode === "directe" ? "selected" : ""}>Nota directa</option>
+          </select></td>
+          <td class="tiny ${mode === "reptes" && !reps.length ? "ko" : "soft"}">${desc}</td>
+          <td class="num"><input class="nota" type="number" min="0" max="100" step="5" value="${ra.pes}"
+            onchange="mut(()=>{C().config.ras[${i}].pes=clamp(Number(this.value)||0,0,100)})"></td>
+          <td><button class="btn mini peril" onclick="esborraRA('${ra.id}')">Esborra</button></td>
+        </tr>`;
+      }).join("")}
+      <tr><td class="sumtot" colspan="3">Total</td><td class="num sumtot ${sumaPes === 100 ? "ok" : "ko"}">${sumaPes}%</td><td></td></tr>
+    </table>`}
+  </div>`;
+}
+function blocAlumnat(c) {
+  return `
+  <div class="card" style="max-width:680px">
+    <div class="toolrow"><h2 style="margin:0">Alumnat (${c.alumnes.length})</h2><span class="spacer"></span>
+      ${enGAS ? `<button class="btn" onclick="obreImportAlumnesClassroom()">Importa de Google Classroom…</button>` : ""}
+      <button class="btn pri" onclick="mut(()=>C().alumnes.push({id:uid(),nom:'Nou alumne'}))">+ Afegeix alumne</button></div>
+    ${!c.alumnes.length ? '<p class="mut tiny">Encara no hi ha alumnes.</p>' : `
+    <table>
+      <tr><th>Nom i cognoms</th><th style="width:70px"></th><th style="width:220px">Equips per repte</th><th style="width:70px"></th></tr>
+      ${c.alumnes.map(al => `<tr>
+        <td><input class="inline" type="text" value="${esc(al.nom)}" onchange="mut(()=>{alumne('${al.id}').nom=this.value.trim()||'Sense nom'})">${al.foraClassroom ? ' <span class="badge b-ambre" title="Ja no apareix al curs de Classroom">fora de Classroom</span>' : ""}</td>
+        <td><button class="btn mini" onclick="anar('alumne:${al.id}')">Fitxa</button></td>
+        <td class="tiny mut">${c.reptes.map(r => { const e = equipAlumne(r, al.id); return e ? esc(e.nom) : "—"; }).join(" · ") || "—"}</td>
+        <td><button class="btn mini peril" onclick="esborraAlumne('${al.id}')">Esborra</button></td>
+      </tr>`).join("")}
+    </table>`}
+  </div>`;
+}
+
+/* ---- pàgina d'un repte: capçalera comuna + subpestanyes ---- */
+function paginaRepte(rep) {
+  if (!SUB_REPTE.some(s => s.id === subRepte)) subRepte = "tauler";
+  const eqIns = rep.instruments.filter(i => i.tipus === "equip");
+  if (!rep.instruments.some(i => i.id === selInstrument)) selInstrument = rep.instruments[0]?.id ?? null;
+  if (!eqIns.some(i => i.id === selRubrica)) selRubrica = eqIns[0]?.id ?? null;
+  const cosos = { tauler: vTauler, equips: vEquips, ponderacio: vInstruments, rubriques: vRubriques, configuracio: vConfigRepte };
+  return `
+  ${crumbGrup(rep.trimestre || "Repte")}
+  <h1>${esc(rep.nom)}</h1>
+  ${rep.sub ? `<p class="lead">${esc(rep.sub)}</p>` : ""}
+  <div class="subtabs">${SUB_REPTE.map(s => `<button class="stab ${subRepte === s.id ? "on" : ""}" onclick="anarSub('${s.id}')">${esc(s.nom)}</button>`).join("")}</div>
+  ${cosos[subRepte](rep)}`;
+}
+/* ---- pàgina d'un RA en mode "activitats": només muntatge (categories i activitats) ---- */
+let raActiuUI = null;
+function paginaRAActivitats(raId) {
+  const ra = raConf(raId);
+  if (raActiuUI !== raId) { // en canviar d'RA, no arrosseguem seleccions ni filtres de l'anterior
+    raActiuUI = raId; selActivitats.clear();
+    filtreCatAct = ""; cercaAct = ""; filtreEsborrany = ""; filtreCatAvalua = ""; actAvaluant = null;
+  }
+  if (!SUB_RA.some(s => s.id === subRA)) subRA = "categories";
+  const cosos = { categories: vCategoriesRA, activitats: vGestioActivitats };
+  return `
+  ${crumbGrup(escurca(ra.nom, 40))}
+  <h1>${esc(ra.nom)}</h1>
+  <div class="subtabs">${SUB_RA.map(s => `<button class="stab ${subRA === s.id ? "on" : ""}" onclick="anarSub('${s.id}')">${esc(s.nom)}</button>`).join("")}
+    <span class="spacer"></span><button class="btn mini" onclick="avaluaRA('${raId}')">Avalua aquest RA →</button></div>
+  ${cosos[subRA](raId)}`;
+}
+
+/* ================= render ================= */
+function render() {
+  nav();
+  const Rv = { avaluar: vAvaluarHub, resultats: vResultats, contingut: vContingut,
+               alumnat: vAlumnatPag, config: vConfigGrup, dades: vDades, seguretat: vSeguretat };
+  let contingut;
+  if (vista && vista.startsWith("repte:")) {
+    const id = vista.slice(6);
+    const rep = C().reptes.find(r => r.id === id);
+    if (!rep) { vista = "contingut"; return render(); }
+    C().actual = id;
+    contingut = paginaRepte(rep);
+  } else if (vista && vista.startsWith("alumne:")) {
+    contingut = vFitxaAlumne(vista.slice(7));
+  } else if (vista && vista.startsWith("ra:")) {
+    const raId = vista.slice(3);
+    const ra = raConf(raId);
+    if (!ra || raMode(ra) === "reptes") { vista = "contingut"; return render(); }
+    if (raMode(ra) === "directe") { avaluaRASel = raId; vista = "avaluar"; return render(); }
+    contingut = paginaRAActivitats(raId);
+  } else {
+    contingut = (Rv[vista] || vAvaluarHub)();
+  }
+  const banner = (backend === "local" && calReconnectar && fitxerHandle)
+    ? `<div class="avis" style="margin-top:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+         L'autoguardat al fitxer «${esc(fitxerNom)}» està en pausa: el navegador demana permís a cada sessió.
+         <button class="btn mini pri" onclick="reconnectaFitxer()">Reconnecta el fitxer</button></div>`
+    : "";
+  // a la graella completa la pàgina deixa el límit d'amplada per encabir-hi més activitats
+  const ample = vista === "avaluar" && modeAvalua === "graella";
+  $("#main").className = "main" + (ample ? " ample" : "");
+  $("#main").innerHTML = banner + contingut;
+  actualitzaHash();
+}
+
+/* ---- enllaços amb marcador (slugs a location.hash) ----
+   #/dades | #/seguretat
+   #/g/<cursId>/avaluar[/ra/<raId>] | /resultats | /contingut | /alumnat | /config
+   #/g/<cursId>/repte/<repteId>/<subRepte> | #/g/<cursId>/ra/<raId>/<subRA>
+   S'escriu amb replaceState (no genera entrades a l'historial ni dispara "hashchange"). */
+const VISTES_SIMPLES = ["avaluar", "resultats", "contingut", "alumnat", "config"];
+function actualitzaHash() {
+  let h;
+  if (vista === "seguretat") h = "#/seguretat";
+  else if (vista === "dades") h = "#/dades";
+  else if (!state.cursActual) h = "#/dades";
+  else {
+    h = `#/g/${state.cursActual}`;
+    if (vista === "avaluar") h += avaluaRASel ? `/avaluar/ra/${avaluaRASel}` : "/avaluar";
+    else if (vista && vista.startsWith("repte:")) h += `/repte/${vista.slice(6)}/${subRepte}`;
+    else if (vista && vista.startsWith("ra:")) h += `/ra/${vista.slice(3)}/${subRA}`;
+    else if (vista && vista.startsWith("alumne:")) h += `/alumne/${vista.slice(7)}`;
+    else if (VISTES_SIMPLES.includes(vista)) h += `/${vista}`;
+    else h += "/avaluar";
+  }
+  if (location.hash !== h) {
+    try { history.replaceState(null, "", h); } catch (e) { /* origen opac (iframe amb sandbox): els marcadors no hi funcionen, la resta sí */ }
+  }
+}
+function aplicaHash() {
+  const parts = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  if (parts[0] === "dades") { vista = "dades"; return true; }
+  if (parts[0] === "seguretat") { vista = "seguretat"; return true; }
+  if (parts[0] !== "g" || !parts[1]) return false;
+  const curs = state.cursos.find(c => c.id === parts[1]);
+  if (!curs) return false;
+  state.cursActual = curs.id;
+  if (!parts[2]) { vista = "avaluar"; return true; }
+  if (parts[2] === "repte" && parts[3] && curs.reptes.some(r => r.id === parts[3])) {
+    vista = "repte:" + parts[3];
+    subRepte = parts[4] && SUB_REPTE.some(s => s.id === parts[4]) ? parts[4] : "tauler";
+    return true;
+  }
+  if (parts[2] === "ra" && parts[3] && curs.config.ras.some(r => r.id === parts[3])) {
+    vista = "ra:" + parts[3];
+    subRA = parts[4] && SUB_RA.some(s => s.id === parts[4]) ? parts[4] : "categories";
+    return true;
+  }
+  if (parts[2] === "alumne" && parts[3] && curs.alumnes.some(a => a.id === parts[3])) {
+    vista = "alumne:" + parts[3]; return true;
+  }
+  if (parts[2] === "avaluar") {
+    vista = "avaluar";
+    if (parts[3] === "ra" && parts[4] && curs.config.ras.some(r => r.id === parts[4])) avaluaRASel = parts[4];
+    return true;
+  }
+  if (VISTES_SIMPLES.includes(parts[2])) { vista = parts[2]; return true; }
+  vista = "avaluar";
+  return true;
+}
+window.addEventListener("hashchange", () => { if (aplicaHash()) render(); });
+
+/* ---- Tauler (del repte actual) ---- */
+function vTauler() {
+  const rep = R();
+  if (!rep) return `<h1>Sense reptes</h1><div class="avis roig">Crea un repte des del botó «+ Nou repte» de la barra lateral.</div>`;
+  const eqInstr = rep.instruments.filter(i => i.tipus === "equip");
+  const indInstr = rep.instruments.filter(i => i.tipus === "individual");
+  const rows = C().alumnes.map(al => {
+    const ras = {};
+    rep.ras.forEach(ra => ras[ra] = notaRARepte(rep, al.id, ra));
+    return { al, ras };
+  });
+  const mitj = ra => {
+    const v = rows.map(r => r.ras[ra].nota).filter(n => n !== null);
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+  };
+  const pendents = rows.filter(r => rep.ras.some(ra => r.ras[ra].pendent)).length;
+  const total = C().alumnes.length * rep.instruments.length;
+  let fetes = 0;
+  C().alumnes.forEach(al => rep.instruments.forEach(ins => { if (notaIndividual(rep, ins.id, al.id) !== null) fetes++; }));
+
+  const cel = x => {
+    if (x.nota === null) return `<td class="num mut">—</td>`;
+    const cls = x.pendent ? "pend" : (!x.completa ? "prov" : "");
+    const marca = x.pendent ? " ⚑" : (!x.completa ? " *" : "");
+    return `<td class="num"><span class="nota-final ${cls}">${fmt(x.nota)}${marca}</span></td>`;
+  };
+
+  return `
+  <p class="lead">Notes amb <b>*</b>: provisionals (falten instruments). Bandera <span class="nota-final pend">⚑</span>: RA pendent per mínim de PV no assolit.</p>
+  <div class="grid-cards">
+    ${rep.ras.map(ra => `<div class="stat"><div class="lab">Mitjana ${ra} (prov.)</div><div class="val">${fmt(mitj(ra))}</div><div class="sub">${esc(raConf(ra)?.nom ?? "")}</div></div>`).join("")}
+    <div class="stat"><div class="lab">RA pendents</div><div class="val">${pendents}</div><div class="sub">alumnes amb mínim no assolit</div></div>
+    <div class="stat"><div class="lab">Progrés</div><div class="val">${total ? Math.round(100 * fetes / total) : 0}%</div><div class="sub">${fetes} de ${total} notes</div></div>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <div class="toolrow"><h2 style="margin:0">Notes per alumne</h2><span class="spacer"></span>
+      <button class="btn" onclick="exportaCSVRepte()">Exporta CSV del repte</button></div>
+    <table>
+      <tr><th>Alumne/a</th><th>Equip</th>
+        ${eqInstr.map(i => `<th class="num" title="${esc(i.nom)}">${esc(i.id)}</th>`).join("")}
+        ${indInstr.map(i => `<th class="num" title="${esc(i.nom)}">${esc(i.id)}</th>`).join("")}
+        ${rep.ras.map(ra => `<th class="num">${ra}</th>`).join("")}</tr>
+      ${rows.map(r => `<tr>
+        <td>${esc(r.al.nom)}</td>
+        <td class="tiny mut">${esc(equipAlumne(rep, r.al.id)?.nom ?? "Sense equip")}</td>
+        ${eqInstr.map(i => { const n = notaIndividual(rep, i.id, r.al.id); const f = factorDe(rep, i.id, r.al.id);
+          return `<td class="num ${n === null ? "mut" : ""}" title="factor ×${f.toFixed(1)}">${fmt(n)}</td>`; }).join("")}
+        ${indInstr.map(i => { const n = notaIndividual(rep, i.id, r.al.id);
+          const baix = n !== null && i.minim != null && n < i.minim;
+          return `<td class="num ${n === null ? "mut" : ""}">${baix ? `<span class="badge b-roig">${fmt(n)}</span>` : fmt(n)}</td>`; }).join("")}
+        ${rep.ras.map(ra => cel(r.ras[ra])).join("")}
+      </tr>`).join("")}
+    </table>
+  </div>`;
+}
+
+function exportaCSVRepte() {
+  const rep = R(), sep = ";";
+  const eqI = rep.instruments.filter(i => i.tipus === "equip").map(i => i.id);
+  const inI = rep.instruments.filter(i => i.tipus === "individual").map(i => i.id);
+  let out = ["Alumne", "Equip", ...eqI, ...inI, ...rep.ras, "Estat"].join(sep) + "\n";
+  for (const al of C().alumnes) {
+    const ras = rep.ras.map(ra => notaRARepte(rep, al.id, ra));
+    const n = id => { const v = notaIndividual(rep, id, al.id); return v === null ? "" : v.toFixed(2).replace(".", ","); };
+    const estat = ras.some(x => x.pendent) ? "PENDENT (mínim PV)" : (ras.every(x => x.completa) ? "Completa" : "Provisional");
+    out += [al.nom, equipAlumne(rep, al.id)?.nom ?? "", ...eqI.map(n), ...inI.map(n),
+      ...ras.map(x => x.nota === null ? "" : x.nota.toFixed(2).replace(".", ",")), estat].join(sep) + "\n";
+  }
+  baixa("notes_" + rep.id + ".csv", out, "text/csv");
+}
+function baixa(nomFitxer, contingut, tipus) {
+  const blob = new Blob(["\ufeff" + contingut], { type: tipus + ";charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = nomFitxer; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ---- Avaluar ---- */
+function vAvaluar() {
+  const rep = R();
+  const ins = instrDe(rep, selInstrument);
+  return `
+  <p class="lead">Tria l'instrument. Als entregables d'equip, marca el nivell de cada fila de la rúbrica (nota = punts / màxim × 10) i ajusta el factor individual de cada membre. A les PV i l'observació, introdueix la nota directament.</p>
+  <div class="toolrow">
+    <label class="soft tiny" for="selins">Instrument</label>
+    <select id="selins" onchange="mut(()=>{selInstrument=this.value})">
+      ${rep.instruments.map(i => `<option value="${esc(i.id)}" ${i.id === selInstrument ? "selected" : ""}>${esc(i.nom)}</option>`).join("")}
+    </select>
+  </div>
+  ${!ins ? '<div class="avis roig">Aquest repte no té instruments: crea\'ls a Entregables.</div>'
+    : ins.tipus === "individual" ? blocIndividual(rep, ins) : blocEquip(rep, ins)}`;
+}
+function blocIndividual(rep, ins) {
+  const notes = rep.avaluacions.individual[ins.id] || {};
+  return `<div class="card">
+    <h2>${esc(ins.nom)}</h2>
+    ${ins.minim != null ? `<div class="avis">Aquest instrument té <b>mínim ${ins.minim}</b>: per sota, el RA queda pendent encara que la mitjana aprovi.</div>` : ""}
+    <table style="max-width:640px">
+      <tr><th>Alumne/a</th><th>Equip</th><th class="num">Nota (0–10)</th></tr>
+      ${C().alumnes.map(al => {
+        const v = notes[al.id];
+        const baix = v !== undefined && v !== null && v !== "" && ins.minim != null && Number(v) < ins.minim;
+        return `<tr><td>${esc(al.nom)}</td><td class="tiny mut">${esc(equipAlumne(rep, al.id)?.nom ?? "—")}</td>
+        <td class="num"><input class="nota" type="number" min="0" max="10" step="0.1" value="${v ?? ""}"
+          onchange="posaNotaInd('${esc(ins.id)}','${al.id}',this.value)">
+          ${baix ? '<span class="badge b-roig" style="margin-left:6px">&lt; mínim</span>' : ""}</td></tr>`;
+      }).join("")}
+    </table>
+  </div>`;
+}
+function posaNotaInd(insId, alId, val) {
+  mut(() => {
+    const rep = R();
+    if (!rep.avaluacions.individual[insId]) rep.avaluacions.individual[insId] = {};
+    if (val === "") delete rep.avaluacions.individual[insId][alId];
+    else rep.avaluacions.individual[insId][alId] = clamp(Number(val), 0, 10);
+  });
+}
+function blocEquip(rep, ins) {
+  const rub = rep.rubriques[ins.id];
+  if (!rub || !rub.files.length) {
+    return `<div class="avis roig">Aquest entregable no té rúbrica. Ves a <b>Rúbriques</b> i crea-hi les files abans d'avaluar.</div>`;
+  }
+  const cards = rep.equips.map(eq => {
+    const reg = rep.avaluacions.equip[ins.id]?.[eq.id] || { nivells: [] };
+    const ne = notaEquip(rep, ins.id, eq.id);
+    return `<div class="equip-card">
+      <div class="equip-head"><span class="n">${esc(eq.nom)}</span>
+        <span class="tiny mut">${eq.membres.length} membres</span>
+        <span class="nota-eq ${ne === null ? "mut" : ""}">${ne === null ? "sense nota" : fmt(ne, 2)}</span></div>
+      <div class="equip-body">
+        <table>
+          <tr><th style="width:60px">CA</th><th>Criteri</th><th style="width:340px">Nivell assolit</th></tr>
+          ${rub.files.map((f, fi) => {
+            const v = reg.nivells[fi];
+            return `<tr><td><span class="badge b-blau">${esc(f.ca)}</span></td>
+              <td>${esc(f.titol)}<div class="tiny mut">${v !== null && v !== undefined ? esc(f.nivells[v]) : "sense valorar"}</div></td>
+              <td><span class="seg">${[0, 1, 2, 3].map(l =>
+                `<button class="${v === l ? "on" : ""}" title="${esc(f.nivells[l])}"
+                  onclick="posaNivell('${esc(ins.id)}','${eq.id}',${fi},${l})">${l} · ${esc(rub.nivellNoms[l])}</button>`).join("")}</span></td></tr>`;
+          }).join("")}
+        </table>
+        <h3>Factors individuals d'aquest entregable</h3>
+        <div>
+          ${eq.membres.map(alId => {
+            const al = alumne(alId); if (!al) return "";
+            const f = factorDe(rep, ins.id, alId);
+            const ni = notaIndividual(rep, ins.id, alId);
+            return `<span class="chip">${esc(al.nom)}
+              <select onchange="posaFactor('${esc(ins.id)}','${alId}',this.value)" style="padding:2px 5px;font-size:12px">
+                ${C().config.factorsPermesos.map(x => `<option value="${x}" ${Math.abs(x - f) < 0.001 ? "selected" : ""}>× ${x.toFixed(1).replace(".", ",")}</option>`).join("")}
+              </select>
+              <b style="font-variant-numeric:tabular-nums">${ni === null ? "—" : fmt(ni, 2)}</b></span>`;
+          }).join("") || '<span class="tiny mut">Aquest equip no té membres.</span>'}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+  return `<div class="avis blau">Nota de l'entregable = punts obtinguts / punts màxims × 10. El factor (0,8–1,1) multiplica la nota d'equip per a cada membre, amb topall a 10.</div>${cards}`;
+}
+function posaNivell(insId, eqId, fi, nivell) {
+  mut(() => {
+    const rep = R();
+    const rub = rep.rubriques[insId];
+    if (!rep.avaluacions.equip[insId]) rep.avaluacions.equip[insId] = {};
+    if (!rep.avaluacions.equip[insId][eqId]) rep.avaluacions.equip[insId][eqId] = { nivells: new Array(rub.files.length).fill(null) };
+    const reg = rep.avaluacions.equip[insId][eqId];
+    while (reg.nivells.length < rub.files.length) reg.nivells.push(null);
+    reg.nivells[fi] = (reg.nivells[fi] === nivell) ? null : nivell;
+  });
+}
+function posaFactor(insId, alId, val) {
+  mut(() => {
+    const rep = R();
+    if (!rep.avaluacions.factors[insId]) rep.avaluacions.factors[insId] = {};
+    rep.avaluacions.factors[insId][alId] = Number(val);
+  });
+}
+
+/* ---- Equips (del repte) ---- */
+function vEquips() {
+  const rep = R();
+  const senseEquip = C().alumnes.filter(a => !equipAlumne(rep, a.id));
+  return `
+  <p class="lead">Els equips són propis de cada repte: pots reorganitzar-los entre trimestres sense perdre res. Afegeix membres amb el desplegable de cada equip i treu-los amb la ✕ del xip.</p>
+  <div class="toolrow"><button class="btn pri" onclick="mut(()=>R().equips.push({id:uid(),nom:'Equip nou',membres:[]}))">+ Afegeix equip</button></div>
+  ${rep.equips.map(eq => `
+    <div class="card" style="max-width:780px">
+      <div class="toolrow" style="margin-bottom:8px">
+        <input class="inline" style="max-width:280px;font-family:'Archivo';font-weight:700;font-size:15px" type="text" value="${esc(eq.nom)}"
+          onchange="mut(()=>{equipDe(R(),'${eq.id}').nom=this.value.trim()||'Equip'})">
+        <span class="badge b-gris">${eq.membres.length} membres</span><span class="spacer"></span>
+        <button class="btn mini peril" onclick="esborraEquip('${eq.id}')">Esborra</button>
+      </div>
+      <div>
+        ${eq.membres.map(alId => { const al = alumne(alId); return al ? `<span class="chip">${esc(al.nom)}<button class="x" title="Treu de l'equip" onclick="treuMembre('${eq.id}','${alId}')">✕</button></span>` : ""; }).join("")}
+        ${senseEquip.length ? `<select onchange="if(this.value)afegeixMembre('${eq.id}',this.value)" style="margin:3px 0">
+          <option value="">+ Afegeix membre…</option>
+          ${senseEquip.map(a => `<option value="${a.id}">${esc(a.nom)}</option>`).join("")}
+        </select>` : ""}
+        ${!eq.membres.length && !senseEquip.length ? '<span class="tiny mut">Tots els alumnes ja tenen equip.</span>' : ""}
+      </div>
+    </div>`).join("")}
+  ${senseEquip.length ? `<div class="avis">Alumnes sense equip en aquest repte: ${senseEquip.map(a => esc(a.nom)).join(", ")}. No rebran nota dels entregables d'equip.</div>` : ""}`;
+}
+function afegeixMembre(eqId, alId) { mut(() => equipDe(R(), eqId).membres.push(alId)); }
+function treuMembre(eqId, alId) { mut(() => { const e = equipDe(R(), eqId); e.membres = e.membres.filter(m => m !== alId); }); }
+async function esborraEquip(id) {
+  const rep = R(), eq = equipDe(rep, id);
+  if (!await confirmModal(`Esborrar ${eq.nom} d'aquest repte? Les seves notes d'equip s'eliminaran.`)) return;
+  mut(() => {
+    rep.equips = rep.equips.filter(e => e.id !== id);
+    for (const k of Object.keys(rep.avaluacions.equip)) delete rep.avaluacions.equip[k][id];
+  });
+}
+
+/* ---- Ponderació (del repte) ---- */
+function vInstruments() {
+  const rep = R();
+  const suma = ra => rep.instruments.reduce((s, i) => s + (Number(i.pes[ra]) || 0), 0);
+  return `
+  <p class="lead">Cada instrument reparteix el seu pes entre els RA que treballa aquest repte (${rep.ras.join(", ") || "cap"} — es trien a la subpestanya Configuració). La suma de cada columna ha de ser 100. «Mínim»: nota per sota de la qual el RA queda pendent.</p>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <tr><th>Instrument</th><th style="width:130px">Tipus</th>
+        ${rep.ras.map(ra => `<th class="num" style="width:90px">Pes ${ra}</th>`).join("")}
+        <th class="num" style="width:80px">Mínim</th><th style="width:70px"></th></tr>
+      ${rep.instruments.map(i => `<tr>
+        <td><input class="inline" type="text" value="${esc(i.nom)}" onchange="mut(()=>{instrDe(R(),'${esc(i.id)}').nom=this.value.trim()||'${esc(i.id)}'})"></td>
+        <td><select onchange="mut(()=>{instrDe(R(),'${esc(i.id)}').tipus=this.value})">
+          <option value="equip" ${i.tipus === "equip" ? "selected" : ""}>Equip (rúbrica)</option>
+          <option value="individual" ${i.tipus === "individual" ? "selected" : ""}>Individual</option></select></td>
+        ${rep.ras.map(ra => `<td class="num"><input class="nota" type="number" min="0" max="100" step="5" value="${i.pes[ra] ?? 0}"
+          onchange="mut(()=>{instrDe(R(),'${esc(i.id)}').pes['${ra}']=clamp(Number(this.value)||0,0,100)})"></td>`).join("")}
+        <td class="num"><input class="nota" type="number" min="0" max="10" step="0.5" value="${i.minim ?? ""}" placeholder="—"
+          onchange="mut(()=>{instrDe(R(),'${esc(i.id)}').minim=this.value===''?null:clamp(Number(this.value),0,10)})"></td>
+        <td><button class="btn mini peril" onclick="esborraInstrument('${esc(i.id)}')">Esborra</button></td>
+      </tr>`).join("")}
+      <tr><td class="sumtot">Total</td><td></td>
+        ${rep.ras.map(ra => { const s = suma(ra); return `<td class="num sumtot ${s === 100 ? "ok" : "ko"}">${s}%</td>`; }).join("")}
+        <td></td><td></td></tr>
+    </table>
+    <div class="toolrow" style="margin:14px 0 0"><button class="btn pri" onclick="nouInstrument()">+ Afegeix instrument</button></div>
+  </div>
+  ${rep.ras.some(ra => suma(ra) !== 100) ? `<div class="avis roig">Hi ha columnes que no sumen 100%. Les notes es calculen normalitzades sobre el pes definit, però revisa la ponderació abans de traslladar notes al butlletí.</div>` : ""}`;
+}
+async function nouInstrument() {
+  const id = await promptModal("Codi curt de l'instrument (p. ex. E6):");
+  if (!id) return;
+  const net = id.trim().toUpperCase().replace(/\s+/g, "");
+  const rep = R();
+  if (!net || instrDe(rep, net)) { await alertModal("Codi buit o ja existent en aquest repte."); return; }
+  mut(() => {
+    const pes = {}; rep.ras.forEach(ra => pes[ra] = 0);
+    rep.instruments.push({ id: net, nom: net + " · Nou instrument", tipus: "equip", pes, minim: null });
+    rep.rubriques[net] = { nivellNoms: [...NIVELLS_DEF], files: [] };
+  });
+}
+async function esborraInstrument(id) {
+  if (!await confirmModal(`Esborrar l'instrument ${id} amb la seva rúbrica i totes les notes associades?`)) return;
+  mut(() => {
+    const rep = R();
+    rep.instruments = rep.instruments.filter(i => i.id !== id);
+    delete rep.rubriques[id];
+    delete rep.avaluacions.equip[id];
+    delete rep.avaluacions.factors[id];
+    delete rep.avaluacions.individual[id];
+    if (selInstrument === id) selInstrument = null;
+    if (selRubrica === id) selRubrica = null;
+  });
+}
+
+/* ---- Rúbriques (del repte) ---- */
+function vRubriques() {
+  const rep = R();
+  const eqIns = rep.instruments.filter(i => i.tipus === "equip");
+  if (!eqIns.length) return `<div class="avis roig">Aquest repte no té cap instrument d'equip. Crea'n a la subpestanya Entregables.</div>`;
+  const rub = rep.rubriques[selRubrica] || (rep.rubriques[selRubrica] = { nivellNoms: [...NIVELLS_DEF], files: [] });
+  return `
+  <p class="lead">Les files són els criteris d'avaluació que evidencia cada entregable (més les transversals que calguin). Quatre nivells amb valor 0–3; nota = punts / màxim × 10. Els canvis es reflecteixen a l'instant a la subpestanya Avaluar.</p>
+  <div class="toolrow">
+    <label class="soft tiny" for="selrub">Entregable</label>
+    <select id="selrub" onchange="mut(()=>{selRubrica=this.value})">
+      ${eqIns.map(i => `<option value="${esc(i.id)}" ${i.id === selRubrica ? "selected" : ""}>${esc(i.nom)}</option>`).join("")}
+    </select>
+    <span class="spacer"></span>
+    <button class="btn pri" onclick="novaFila()">+ Afegeix fila</button>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <tr><th style="width:70px">CA</th><th style="width:190px">Criteri</th>
+        ${[0, 1, 2, 3].map(l => `<th>${l} · <input class="inline" style="display:inline-block;width:120px;padding:2px 5px" type="text" value="${esc(rub.nivellNoms[l])}"
+          onchange="mut(()=>{R().rubriques['${esc(selRubrica)}'].nivellNoms[${l}]=this.value})"></th>`).join("")}
+        <th style="width:56px"></th></tr>
+      ${rub.files.map((f, fi) => `<tr>
+        <td><input class="inline" type="text" value="${esc(f.ca)}" onchange="mut(()=>{R().rubriques['${esc(selRubrica)}'].files[${fi}].ca=this.value})"></td>
+        <td><input class="inline" type="text" value="${esc(f.titol)}" onchange="mut(()=>{R().rubriques['${esc(selRubrica)}'].files[${fi}].titol=this.value})"></td>
+        ${[0, 1, 2, 3].map(l => `<td><textarea onchange="mut(()=>{R().rubriques['${esc(selRubrica)}'].files[${fi}].nivells[${l}]=this.value})">${esc(f.nivells[l])}</textarea></td>`).join("")}
+        <td><button class="btn mini peril" onclick="esborraFila(${fi})">✕</button></td>
+      </tr>`).join("")}
+    </table>
+    ${!rub.files.length ? '<p class="mut tiny" style="margin-top:10px">Aquesta rúbrica encara no té files.</p>' : ""}
+  </div>`;
+}
+function novaFila() {
+  mut(() => {
+    const rep = R();
+    rep.rubriques[selRubrica].files.push({ id: uid(), ca: "CA", titol: "Nou criteri", nivells: ["", "", "", ""] });
+    const regs = rep.avaluacions.equip[selRubrica] || {};
+    Object.values(regs).forEach(r => r.nivells.push(null));
+  });
+}
+async function esborraFila(fi) {
+  if (!await confirmModal("Esborrar aquesta fila de la rúbrica? Les valoracions d'aquesta fila es perdran.")) return;
+  mut(() => {
+    const rep = R();
+    rep.rubriques[selRubrica].files.splice(fi, 1);
+    const regs = rep.avaluacions.equip[selRubrica] || {};
+    Object.values(regs).forEach(r => r.nivells.splice(fi, 1));
+  });
+}
+
+/* ---- Configuració (subpestanya d'un repte concret) ---- */
+function vConfigRepte(rep) {
+  const rasDisp = C().config.ras.filter(r => raMode(r) === "reptes");
+  const total = C().alumnes.length * rep.instruments.length;
+  let fetes = 0;
+  C().alumnes.forEach(al => rep.instruments.forEach(ins => { if (notaIndividual(rep, ins.id, al.id) !== null) fetes++; }));
+  return `
+  <p class="lead">Nom, trimestre i RA que treballa aquest repte. Duplicar-lo copia tota l'estructura (equips opcionalment) sense les notes: ideal per reutilitzar-lo el curs vinent.</p>
+  <div class="card" style="max-width:640px">
+    <h2>Dades bàsiques</h2>
+    <div class="toolrow" style="margin-bottom:10px">
+      <input class="inline" style="max-width:380px;font-family:'Archivo';font-weight:700;font-size:16px" type="text" value="${esc(rep.nom)}"
+        onchange="mut(()=>{R().nom=this.value.trim()||'Repte'})">
+    </div>
+    <div class="toolrow">
+      <input class="inline" style="max-width:150px" type="text" value="${esc(rep.trimestre || "")}" placeholder="Trimestre"
+        onchange="mut(()=>{R().trimestre=this.value})">
+      <input class="inline" style="flex:1;min-width:220px" type="text" value="${esc(rep.sub || "")}" placeholder="Descripció breu"
+        onchange="mut(()=>{R().sub=this.value})">
+    </div>
+  </div>
+  <div class="card" style="max-width:640px">
+    <h2>RA que treballa</h2>
+    <div>${rasDisp.map(ra => `<label class="ratag"><input type="checkbox" ${rep.ras.includes(ra.id) ? "checked" : ""}
+      onchange="toggleRA('${rep.id}','${ra.id}',this.checked)"> ${ra.id} <span class="mut">· ${esc(ra.nom)}</span></label>`).join("") || '<span class="tiny mut">Cap RA en mode «Reptes» al mòdul.</span>'}</div>
+  </div>
+  <div class="card" style="max-width:640px">
+    <h2>Estat</h2>
+    <p class="tiny mut">${rep.equips.length} equips · ${rep.instruments.length} instruments · ${Object.keys(rep.rubriques).length} rúbriques · progrés d'avaluació ${total ? Math.round(100 * fetes / total) : 0}%</p>
+  </div>
+  <div class="card" style="max-width:640px">
+    <h2>Accions</h2>
+    <div class="toolrow">
+      <button class="btn" onclick="duplicaRepte('${rep.id}')">Duplica aquest repte</button>
+      <button class="btn peril" onclick="esborraRepte('${rep.id}')">Esborra aquest repte</button>
+    </div>
+  </div>`;
+}
+async function toggleRA(repId, raId, on) {
+  const rep = C().reptes.find(r => r.id === repId);
+  if (!on) {
+    const altres = C().reptes.filter(r => r.id !== repId && r.ras.includes(raId));
+    const teNotes = rep.instruments.some(i => (Number(i.pes[raId]) || 0) > 0);
+    if (teNotes && !await confirmModal(`Hi ha instruments amb pes a «${raNom(raId)}». Si el desmarques, aquest repte deixarà de comptar-hi${altres.length ? "" : " i cap repte no el treballarà"}. Continuar?`)) { render(); return; }
+  }
+  mut(() => {
+    if (on) { if (!rep.ras.includes(raId)) rep.ras.push(raId); rep.ras.sort(); rep.instruments.forEach(i => { if (i.pes[raId] === undefined) i.pes[raId] = 0; }); }
+    else rep.ras = rep.ras.filter(x => x !== raId);
+  });
+}
+function nouRepte() {
+  const id = uid();
+  mut(() => {
+    C().reptes.push({
+      id, nom: "Repte nou", sub: "", trimestre: "", ras: [],
+      equips: [],
+      instruments: [
+        { id: "PV", nom: "PV · Validació individual", tipus: "individual", pes: {}, minim: 4 },
+        { id: "OBS", nom: "Observació · diari, rols i actitud", tipus: "individual", pes: {}, minim: null },
+      ],
+      rubriques: {},
+      avaluacions: { equip: {}, factors: {}, individual: {} },
+    });
+    C().actual = id;
+    vista = "repte:" + id;
+    subRepte = "configuracio";
+  });
+}
+async function duplicaRepte(id) {
+  const orig = C().reptes.find(r => r.id === id);
+  const copiaEquips = await confirmModal("Vols copiar també els equips i els seus membres? (D'acord = sí; Cancel·la = equips buits)");
+  mut(() => {
+    const nou = deep(orig);
+    nou.id = uid();
+    nou.nom = orig.nom + " (còpia)";
+    nou.avaluacions = { equip: {}, factors: {}, individual: {} };
+    nou.equips = copiaEquips ? deep(orig.equips).map(e => ({ ...e, id: uid() })) : [];
+    C().reptes.push(nou);
+    C().actual = nou.id;
+    vista = "repte:" + nou.id;
+    subRepte = "configuracio";
+  });
+}
+async function esborraRepte(id) {
+  const rep = C().reptes.find(r => r.id === id);
+  if (!await confirmModal(`Esborrar «${rep.nom}» amb tots els seus equips, rúbriques i notes? Aquesta acció no es pot desfer (fes una exportació abans, si cal).`)) return;
+  mut(() => {
+    C().reptes = C().reptes.filter(r => r.id !== id);
+    if (C().actual === id) C().actual = C().reptes[0]?.id ?? null;
+    if (vista === "repte:" + id) vista = "contingut";
+  });
+}
+
+/* ---- Grups-aula (mòdul + grup): nivell superior, multimòdul i multigrup ---- */
+function anarPrimeraVistaDelCurs() {
+  vista = "avaluar"; avaluaRASel = null; avaluaRepteSel = null;
+  subRepte = "tauler"; subRA = "categories";
+  raActiuUI = null; selActivitats.clear();
+  filtreCatAct = ""; cercaAct = ""; filtreEsborrany = ""; filtreCatAvalua = ""; actAvaluant = null;
+  filtreContingutsRA = ""; cercaContinguts = "";
+}
+function canviaCurs(id) {
+  mut(() => { state.cursActual = id; anarPrimeraVistaDelCurs(); });
+}
+async function nouCurs() {
+  const modul = await promptModal("Nom del nou mòdul professional (p. ex. «MP7 Desenvolupament web en entorn client»):");
+  if (!modul || !modul.trim()) return;
+  const grup = await promptModal("Nom del grup-aula (p. ex. «2n DAW A»):", "Grup 1");
+  if (grup === null) return;
+  mut(() => {
+    const nou = nouCursBuit(modul.trim(), (grup || "Grup 1").trim());
+    state.cursos.push(nou);
+    state.cursActual = nou.id;
+    anarPrimeraVistaDelCurs();
+  });
+}
+async function duplicaCurs(id) {
+  const orig = state.cursos.find(c => c.id === id);
+  const grup = await promptModal(`Nom del nou grup-aula per al mateix mòdul (${orig.modul}). Es copiaran l'estructura de RA, reptes, instruments, rúbriques i categories, però no l'alumnat ni les notes.`, orig.grup + " (còpia)");
+  if (!grup || !grup.trim()) return;
+  mut(() => {
+    const nou = deep(orig);
+    nou.id = uid();
+    nou.grup = grup.trim();
+    nou.alumnes = [];
+    nou.reptes.forEach(r => { r.equips = []; r.avaluacions = { equip: {}, factors: {}, individual: {} }; });
+    nou.notesDirectes = {};
+    Object.values(nou.activitatsRA).forEach(d => d.activitats.forEach(a => { a.notes = {}; }));
+    state.cursos.push(nou);
+    state.cursActual = nou.id;
+    anarPrimeraVistaDelCurs();
+  });
+}
+async function esborraCurs(id) {
+  if (state.cursos.length === 1) { await alertModal("No pots esborrar l'últim grup-aula."); return; }
+  const curs = state.cursos.find(c => c.id === id);
+  if (!await confirmModal(`Esborrar el grup-aula «${curs.modul} · ${curs.grup}» amb tot el seu alumnat, reptes i notes? Aquesta acció no es pot desfer (fes una exportació abans, si cal).`)) return;
+  mut(() => {
+    state.cursos = state.cursos.filter(c => c.id !== id);
+    if (state.cursActual === id) { state.cursActual = state.cursos[0].id; anarPrimeraVistaDelCurs(); }
+  });
+}
+
+/* ---- RA en mode "activitats": tres vistes separades ---- */
+function vCategoriesRA(raId) {
+  const dades = C().activitatsRA[raId] || (C().activitatsRA[raId] = { categories: [], activitats: [] });
+  const suma = dades.categories.reduce((s, c) => s + (Number(c.pes) || 0), 0);
+  return `
+  <p class="lead">Categories ponderades d'aquest RA (han de sumar 100%), amb nota mínima opcional: si no se supera, l'RA queda pendent tot i que la mitjana aprovi.</p>
+  <div class="card" style="overflow-x:auto">
+    <div class="toolrow"><h2 style="margin:0">Categories</h2><span class="spacer"></span>
+      <button class="btn pri" onclick="novaCategoria('${raId}')">+ Afegeix categoria</button></div>
+    ${!dades.categories.length ? '<p class="mut tiny">Encara no hi ha categories per a aquest RA.</p>' : `
+    <table>
+      <tr><th>Categoria</th><th class="num" style="width:90px">Pes</th><th class="num" style="width:120px">Nota mínima</th><th style="width:70px"></th></tr>
+      ${dades.categories.map((c, ci) => `<tr>
+        <td><input class="inline" type="text" value="${esc(c.nom)}" onchange="mut(()=>{C().activitatsRA['${raId}'].categories[${ci}].nom=this.value.trim()||'Categoria'})"></td>
+        <td class="num"><input class="nota" type="number" min="0" max="100" step="5" value="${c.pes ?? 0}"
+          onchange="mut(()=>{C().activitatsRA['${raId}'].categories[${ci}].pes=clamp(Number(this.value)||0,0,100)})"></td>
+        <td class="num"><input class="nota" type="number" min="0" max="10" step="0.5" value="${c.minim ?? ""}" placeholder="—"
+          onchange="mut(()=>{C().activitatsRA['${raId}'].categories[${ci}].minim=this.value===''?null:clamp(Number(this.value),0,10)})"></td>
+        <td><button class="btn mini peril" onclick="esborraCategoria('${raId}','${c.id}')">Esborra</button></td>
+      </tr>`).join("")}
+      <tr><td class="sumtot">Total</td><td class="num sumtot ${suma === 100 ? "ok" : "ko"}">${suma}%</td><td></td><td></td></tr>
+    </table>`}
+    ${dades.categories.length && suma !== 100 ? '<div class="avis roig">Les categories d\'aquest RA no sumen 100%.</div>' : ""}
+  </div>
+  <div class="card">
+    <h2>Biblioteca de categories generals del mòdul</h2>
+    <p class="tiny mut">Noms reutilitzables entre RA (p. ex. «Exàmens», «Pràctiques»). Usar-ne una en aquest RA en crea una còpia independent, amb pes i mínim propis.</p>
+    <div class="toolrow">
+      ${C().categoriesGenerals.map(g => `<span class="chip">${esc(g.nom)}
+        <button class="x" title="Usa-la en aquest RA" onclick="usaCategoriaGeneral('${raId}','${g.id}')">➕</button>
+        <button class="x" title="Esborra de la biblioteca" onclick="esborraCategoriaGeneral('${g.id}')">✕</button></span>`).join("") || '<span class="tiny mut">Encara no n\'hi ha cap.</span>'}
+      <button class="btn mini" onclick="novaCategoriaGeneral()">+ Nova categoria general</button>
+    </div>
+  </div>`;
+}
+/* ---- Gestió d'activitats: selecció múltiple, filtres i reassignació d'RA/categoria ---- */
+let selActivitats = new Set();   // ids d'activitat marcades (per a accions en bloc)
+let filtreCatAct = "";           // filtre per categoria dins la gestió
+let cercaAct = "";               // cerca de text dins la gestió
+let filtreEsborrany = "";        // "", "si", "no"
+
+function activitatsFiltrades(raId) {
+  const d = C().activitatsRA[raId];
+  const q = cercaAct.trim().toLowerCase();
+  return d.activitats.filter(a =>
+    (!filtreCatAct || a.categoriaId === filtreCatAct)
+    && (!filtreEsborrany || (filtreEsborrany === "si" ? !!a.esborrany : !a.esborrany))
+    && (!q || a.nom.toLowerCase().includes(q)));
+}
+function filtraAct(el) {
+  cercaAct = el.value;
+  const pos = el.selectionStart;
+  render();
+  const nou = $("#cerca-act");
+  if (nou) { nou.focus(); nou.setSelectionRange(pos, pos); }
+}
+function toggleSelAct(id, on) { if (on) selActivitats.add(id); else selActivitats.delete(id); render(); }
+function toggleSelTotes(raId, on) {
+  const vis = activitatsFiltrades(raId);
+  if (on) vis.forEach(a => selActivitats.add(a.id)); else vis.forEach(a => selActivitats.delete(a.id));
+  render();
+}
+function vGestioActivitats(raId) {
+  const d = C().activitatsRA[raId] || (C().activitatsRA[raId] = { categories: [], activitats: [] });
+  const vis = activitatsFiltrades(raId);
+  const nSel = vis.filter(a => selActivitats.has(a.id)).length;
+  const totesMarcades = vis.length > 0 && nSel === vis.length;
+  const altresRA = C().config.ras.filter(r => r.id !== raId && raMode(r) === "activitats");
+  return `
+  <p class="lead">Activitats d'aquest RA. Marca'n unes quantes per canviar-los la categoria, el tipus d'avaluació o moure-les a un altre RA de cop.</p>
+  <div class="card" style="overflow-x:auto">
+    <div class="toolrow"><h2 style="margin:0">Activitats (${d.activitats.length})</h2><span class="spacer"></span>
+      ${enGAS ? `<button class="btn" onclick="obreImportClassroom('${raId}')">Importa de Classroom…</button>` : ""}
+      <button class="btn pri" onclick="novaActivitat('${raId}')" ${!d.categories.length ? "disabled" : ""}>+ Afegeix activitat</button></div>
+
+    ${!d.categories.length ? `<div class="avis roig">Crea primer una categoria a la subpestanya <b>Categories</b> per poder-hi afegir activitats.</div>`
+      : !d.activitats.length ? '<p class="mut tiny">Encara no hi ha activitats.</p>' : `
+
+    <div class="toolrow" style="margin-bottom:10px">
+      <select onchange="filtreCatAct=this.value;render()">
+        <option value="">Totes les categories</option>
+        ${d.categories.map(x => `<option value="${x.id}" ${filtreCatAct === x.id ? "selected" : ""}>${esc(x.nom)}</option>`).join("")}
+      </select>
+      <select onchange="filtreEsborrany=this.value;render()">
+        <option value="">Publicades i esborranys</option>
+        <option value="no" ${filtreEsborrany === "no" ? "selected" : ""}>Només publicades</option>
+        <option value="si" ${filtreEsborrany === "si" ? "selected" : ""}>Només esborranys</option>
+      </select>
+      <input id="cerca-act" class="inline" type="text" placeholder="Cerca pel nom…" value="${esc(cercaAct)}" style="max-width:200px" oninput="filtraAct(this)">
+      <span class="tiny mut">${vis.length} de ${d.activitats.length}</span>
+    </div>
+
+    ${nSel ? `<div class="barra-sel">
+      <b>${nSel} seleccionada${nSel > 1 ? "s" : ""}</b>
+      <button class="btn mini" onclick="bulkCategoria('${raId}')">Canvia de categoria</button>
+      <button class="btn mini" onclick="bulkTipus('${raId}')">Canvia el tipus</button>
+      ${altresRA.length ? `<button class="btn mini" onclick="bulkMouRA('${raId}')">Mou a un altre RA</button>` : ""}
+      <button class="btn mini peril" onclick="bulkEsborra('${raId}')">Esborra</button>
+      <span class="spacer"></span>
+      <button class="btn mini" onclick="selActivitats.clear();render()">Desmarca-ho tot</button>
+    </div>` : ""}
+
+    <table>
+      <tr>
+        <th style="width:34px"><input type="checkbox" ${totesMarcades ? "checked" : ""} onchange="toggleSelTotes('${raId}',this.checked)" title="Marca/desmarca les visibles"></th>
+        <th>Activitat</th><th style="width:170px">Categoria</th><th style="width:135px">Avaluació</th><th style="width:120px">Origen</th><th style="width:70px"></th></tr>
+      ${vis.map(a => {
+        const ai = d.activitats.indexOf(a);
+        return `<tr>
+        <td><input type="checkbox" ${selActivitats.has(a.id) ? "checked" : ""} onchange="toggleSelAct('${a.id}',this.checked)"></td>
+        <td><input class="inline" type="text" value="${esc(a.nom)}" onchange="mut(()=>{C().activitatsRA['${raId}'].activitats[${ai}].nom=this.value.trim()||'Activitat'})"></td>
+        <td><select onchange="mut(()=>{C().activitatsRA['${raId}'].activitats[${ai}].categoriaId=this.value})">
+          ${d.categories.map(x => `<option value="${x.id}" ${a.categoriaId === x.id ? "selected" : ""}>${esc(x.nom)}</option>`).join("")}
+        </select></td>
+        <td><select onchange="mut(()=>{C().activitatsRA['${raId}'].activitats[${ai}].tipus=this.value})">
+          <option value="nota" ${a.tipus === "nota" ? "selected" : ""}>Nota (0–10)</option>
+          <option value="fetnofet" ${a.tipus === "fetnofet" ? "selected" : ""}>Fet / No fet</option>
+        </select></td>
+        <td class="tiny mut">${a.classroomId ? '<span class="badge b-blau">Classroom</span>' : "Manual"}${a.esborrany ? ' <span class="badge b-draft">esborrany</span>' : ""}${a.rubrica ? ' <span class="badge b-verd" title="Té rúbrica de Classroom">rúbrica</span>' : ""}${a.foraClassroom ? ' <span class="badge b-ambre" title="Ja no apareix al curs de Classroom">fora de Classroom</span>' : ""}</td>
+        <td><button class="btn mini peril" onclick="esborraActivitat('${raId}','${a.id}')">Esborra</button></td>
+      </tr>`;
+      }).join("")}
+      ${!vis.length ? `<tr><td colspan="6" class="tiny mut">Cap activitat amb aquest filtre.</td></tr>` : ""}
+    </table>`}
+  </div>`;
+}
+function activitatsSeleccionades(raId) {
+  return C().activitatsRA[raId].activitats.filter(a => selActivitats.has(a.id));
+}
+async function bulkCategoria(raId) {
+  const d = C().activitatsRA[raId];
+  const catId = await selectModal("A quina categoria vols moure les activitats seleccionades?", d.categories.map(x => ({ valor: x.id, etiqueta: x.nom })));
+  if (!catId) return;
+  mut(() => activitatsSeleccionades(raId).forEach(a => { a.categoriaId = catId; }));
+  selActivitats.clear(); render();
+}
+async function bulkTipus(raId) {
+  const t = await selectModal("Com s'han d'avaluar les activitats seleccionades?",
+    [{ valor: "nota", etiqueta: "Nota (0–10)" }, { valor: "fetnofet", etiqueta: "Fet / No fet" }]);
+  if (!t) return;
+  mut(() => activitatsSeleccionades(raId).forEach(a => { a.tipus = t; }));
+  selActivitats.clear(); render();
+}
+async function bulkMouRA(raId) {
+  const altres = C().config.ras.filter(r => r.id !== raId && raMode(r) === "activitats");
+  const destiRA = await selectModal("A quin RA vols moure les activitats seleccionades?\n(La categoria es buscarà pel mateix nom al RA de destí, i es crearà si no hi és.)",
+    altres.map(r => ({ valor: r.id, etiqueta: r.nom })));
+  if (!destiRA) return;
+  const origen = C().activitatsRA[raId];
+  const desti = C().activitatsRA[destiRA] || (C().activitatsRA[destiRA] = { categories: [], activitats: [] });
+  const mogudes = activitatsSeleccionades(raId);
+  mut(() => {
+    for (const a of mogudes) {
+      const catOrig = origen.categories.find(x => x.id === a.categoriaId);
+      let catDesti = desti.categories.find(x => catOrig && x.nom.toLowerCase() === catOrig.nom.toLowerCase());
+      if (!catDesti) {
+        catDesti = { id: uid(), nom: catOrig ? catOrig.nom : "Sense categoria", pes: 0, minim: null, classroomId: catOrig ? catOrig.classroomId : null };
+        desti.categories.push(catDesti);
+      }
+      a.categoriaId = catDesti.id;
+      desti.activitats.push(a);
+    }
+    origen.activitats = origen.activitats.filter(a => !selActivitats.has(a.id));
+  });
+  selActivitats.clear();
+  await alertModal(`${mogudes.length} activitat/s moguda/es a «${raNom(destiRA)}». Revisa'n els pesos de categoria als dos RA.`);
+}
+async function bulkEsborra(raId) {
+  const n = activitatsSeleccionades(raId).length;
+  if (!await confirmModal(`Esborrar ${n} activitat/s i totes les seves notes? No es pot desfer.`)) return;
+  mut(() => { const d = C().activitatsRA[raId]; d.activitats = d.activitats.filter(a => !selActivitats.has(a.id)); });
+  selActivitats.clear(); render();
+}
+
+/* ---- Avaluació d'activitats: mode graella (tot) o mode focus (una activitat) ---- */
+let modeAvalua = "focus";   // "focus" | "graella"
+let actAvaluant = null;     // id de l'activitat en mode focus
+let filtreCatAvalua = "";
+
+function vAvaluarActivitats(raId) {
+  const d = C().activitatsRA[raId] || (C().activitatsRA[raId] = { categories: [], activitats: [] });
+  if (!d.activitats.length) {
+    return `<p class="lead">Introdueix aquí la nota de cada alumne a cada activitat.</p>
+      <div class="avis">Encara no hi ha activitats per avaluar. Crea'n a la subpestanya <b>Activitats</b>.</div>`;
+  }
+  const llista = d.activitats.filter(a => !filtreCatAvalua || a.categoriaId === filtreCatAvalua);
+  if (!llista.some(a => a.id === actAvaluant)) actAvaluant = llista[0]?.id ?? null;
+  const capcalera = `
+  <div class="toolrow" style="margin-bottom:14px">
+    <select onchange="filtreCatAvalua=this.value;actAvaluant=null;render()">
+      <option value="">Totes les categories</option>
+      ${d.categories.map(x => `<option value="${x.id}" ${filtreCatAvalua === x.id ? "selected" : ""}>${esc(x.nom)}</option>`).join("")}
+    </select>
+    <span class="spacer"></span>
+    <button class="btn mini ${modeAvalua === "focus" ? "pri" : ""}" onclick="modeAvalua='focus';render()">Una activitat</button>
+    <button class="btn mini ${modeAvalua === "graella" ? "pri" : ""}" onclick="modeAvalua='graella';render()">Graella completa</button>
+  </div>`;
+  return capcalera + (modeAvalua === "focus" ? vAvaluaFocus(raId, d, llista) : vAvaluaGraella(raId, d, llista));
+}
+/* Mode focus: una sola activitat, una fila per alumne. Enter salta a l'alumne següent. */
+function vAvaluaFocus(raId, d, llista) {
+  if (!llista.length) return `<div class="avis">Cap activitat en aquesta categoria.</div>`;
+  const a = d.activitats.find(x => x.id === actAvaluant);
+  const posades = C().alumnes.filter(al => valorActivitat(a, al.id) !== null).length;
+  const total = C().alumnes.length;
+  return `
+  <div class="card">
+    <div class="toolrow" style="margin-bottom:12px">
+      <select onchange="actAvaluant=this.value;render()" style="max-width:340px">
+        ${llista.map(x => {
+          const fetes = C().alumnes.filter(al => valorActivitat(x, al.id) !== null).length;
+          return `<option value="${x.id}" ${x.id === actAvaluant ? "selected" : ""}>${esc(x.nom)} (${fetes}/${total})</option>`;
+        }).join("")}
+      </select>
+      <span class="badge b-blau">${esc((d.categories.find(c => c.id === a.categoriaId) || {}).nom || "—")}</span>
+      ${a.esborrany ? '<span class="badge b-draft">esborrany</span>' : ""}
+      <span class="spacer"></span>
+      <span class="prog" title="${posades} de ${total} avaluats"><i style="width:${total ? Math.round(100 * posades / total) : 0}%"></i></span>
+      <span class="tiny mut">${posades}/${total}</span>
+    </div>
+    ${a.tipus === "fetnofet" ? `<div class="toolrow" style="margin-bottom:10px">
+      <button class="btn mini" onclick="omplebuits('${raId}','${a.id}',true)">Marca els que falten com a Fet</button>
+      <button class="btn mini" onclick="omplebuits('${raId}','${a.id}',false)">…com a No fet</button></div>` : `
+    <div class="toolrow" style="margin-bottom:10px">
+      <input id="nota-massiva" class="nota" type="number" min="0" max="10" step="0.1" placeholder="0–10">
+      <button class="btn mini" onclick="omplebuitsNota('${raId}','${a.id}')">Posa aquesta nota als que falten</button></div>`}
+    ${a.rubrica ? taulaRubrica(raId, a) : `
+    <table style="max-width:560px">
+      <tr><th>Alumne/a</th><th class="num" style="width:130px">${a.tipus === "fetnofet" ? "Fet" : "Nota"}</th></tr>
+      ${C().alumnes.map((al, i) => {
+        const v = a.notes[al.id];
+        const buida = v === undefined || v === null || v === "";
+        return `<tr><td><a class="nom-clic" onclick="anar('alumne:${al.id}')" title="Veure la fitxa de ${esc(al.nom)}">${esc(al.nom)}</a></td>
+        <td class="num ${buida && a.tipus !== "fetnofet" ? "cel-buida" : ""}">${a.tipus === "fetnofet"
+          ? `<input type="checkbox" ${v ? "checked" : ""} onchange="posaNotaActivitat('${raId}','${a.id}','${al.id}',this.checked)">`
+          : `<input class="nota nota-focus" data-i="${i}" type="number" min="0" max="10" step="0.1" value="${v ?? ""}"
+              onchange="posaNotaActivitat('${raId}','${a.id}','${al.id}',this.value)"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();saltaAlumne(${i});}">`}</td></tr>`;
+      }).join("")}
+    </table>`}
+  </div>`;
+}
+/* Avaluació per rúbrica importada de Classroom: un desplegable de nivells per criteri i alumne.
+   La nota surt de la suma de punts dels nivells triats, escalada a 0–10. */
+function puntsMaxRubrica(rub) {
+  return rub.criteris.reduce((s, cr) => s + Math.max(...cr.nivells.map(n => Number(n.punts) || 0), 0), 0);
+}
+function taulaRubrica(raId, a) {
+  const rub = a.rubrica, maxTot = puntsMaxRubrica(rub);
+  const senseP = maxTot <= 0; // rúbrica sense punts: serveix de guia, la nota s'entra a mà
+  return `
+  <p class="tiny mut" style="margin-bottom:8px">Rúbrica importada de Classroom (${rub.criteris.length} criteris${senseP ? ", sense punts" : `, ${maxTot} punts`}).
+  ${senseP ? "Com que els nivells no tenen punts, fes servir la rúbrica com a guia i introdueix la nota a mà." : "La nota es calcula sola a partir dels nivells triats."}</p>
+  <div style="overflow-x:auto"><table>
+    <tr><th class="sticky-nom">Alumne/a</th>
+      ${rub.criteris.map(cr => `<th title="${esc(cr.descripcio || "")}">${esc(cr.titol || "Criteri")}</th>`).join("")}
+      <th class="num" style="width:110px">Nota</th></tr>
+    ${C().alumnes.map((al, i) => {
+      const sel = (a.rubricaSel || {})[al.id] || {};
+      const v = a.notes[al.id];
+      return `<tr><td class="sticky-nom"><a class="nom-clic" onclick="anar('alumne:${al.id}')" title="Veure la fitxa de ${esc(al.nom)}">${esc(al.nom)}</a></td>
+      ${rub.criteris.map((cr, ci) => `<td><select onchange="triaNivellRubrica('${raId}','${a.id}','${al.id}',${ci},this.value)">
+        <option value="">—</option>
+        ${cr.nivells.map((n, ni) => `<option value="${ni}" ${String(sel[ci]) === String(ni) ? "selected" : ""}>${esc(n.titol || ("Nivell " + (ni + 1)))}${n.punts != null ? ` (${n.punts})` : ""}</option>`).join("")}
+      </select></td>`).join("")}
+      <td class="num ${v === undefined ? "cel-buida" : ""}">${senseP
+        ? `<input class="nota nota-focus" data-i="${i}" type="number" min="0" max="10" step="0.1" value="${v ?? ""}"
+             onchange="posaNotaActivitat('${raId}','${a.id}','${al.id}',this.value)">`
+        : (v === undefined ? '<span class="mut">—</span>' : `<span class="nota-final">${fmt(Number(v))}</span>`)}</td>
+      </tr>`;
+    }).join("")}
+  </table></div>`;
+}
+function triaNivellRubrica(raId, actId, alId, criteriIdx, nivellIdx) {
+  mut(() => {
+    const a = C().activitatsRA[raId].activitats.find(x => x.id === actId);
+    if (!a.rubricaSel) a.rubricaSel = {};
+    if (!a.rubricaSel[alId]) a.rubricaSel[alId] = {};
+    if (nivellIdx === "") delete a.rubricaSel[alId][criteriIdx];
+    else a.rubricaSel[alId][criteriIdx] = Number(nivellIdx);
+    const maxTot = puntsMaxRubrica(a.rubrica);
+    if (maxTot <= 0) return; // rúbrica sense punts: la nota l'entra el docent
+    const sel = a.rubricaSel[alId];
+    if (!Object.keys(sel).length) { delete a.notes[alId]; return; }
+    let punts = 0;
+    a.rubrica.criteris.forEach((cr, ci) => {
+      const ni = sel[ci];
+      if (ni !== undefined && cr.nivells[ni]) punts += Number(cr.nivells[ni].punts) || 0;
+    });
+    a.notes[alId] = clamp(Math.round((punts / maxTot) * 100) / 10, 0, 10);
+  });
+}
+function saltaAlumne(i) {
+  const seguent = document.querySelector(`.nota-focus[data-i="${i + 1}"]`);
+  if (seguent) { seguent.focus(); seguent.select(); }
+}
+function omplebuits(raId, actId, valor) {
+  mut(() => {
+    const a = C().activitatsRA[raId].activitats.find(x => x.id === actId);
+    C().alumnes.forEach(al => { if (a.notes[al.id] === undefined) a.notes[al.id] = valor; });
+  });
+}
+function omplebuitsNota(raId, actId) {
+  const el = $("#nota-massiva");
+  if (!el || el.value === "") return;
+  const v = clamp(Number(el.value), 0, 10);
+  mut(() => {
+    const a = C().activitatsRA[raId].activitats.find(x => x.id === actId);
+    C().alumnes.forEach(al => { if (a.notes[al.id] === undefined) a.notes[al.id] = v; });
+  });
+}
+/* Mode graella: totes les activitats visibles alhora, amb el nom d'alumne fixat a l'esquerra. */
+function vAvaluaGraella(raId, d, llista) {
+  if (!llista.length) return `<div class="avis">Cap activitat en aquesta categoria.</div>`;
+  const filtrant = llista.length !== d.activitats.length;
+  return `
+  <div class="toolrow" style="margin-bottom:8px">
+    <span class="tiny mut">Arrossega una capçalera per canviar l'ordre de les activitats.</span>
+    <span class="spacer"></span>
+    <button class="btn mini" onclick="ordenaComClassroom('${raId}')" title="Torna a l'ordre que tenen al curs de Classroom">Ordre de Classroom</button>
+  </div>
+  ${filtrant ? '<div class="avis">Estàs filtrant per categoria: per reordenar, mostra totes les categories (l\'ordre és únic per a tot l\'RA).</div>' : ""}
+  <p class="tiny mut" style="margin-bottom:8px">La primera columna de nota és la de l'RA i es queda fixa en desplaçar-te (⚑ = mínim de categoria no assolit; * = provisional). Passa el ratolí per una capçalera per veure'n el nom sencer i la categoria.</p>
+  <div class="card graella-wrap">
+    <table class="graella">
+      <tr>
+        <th class="sticky-nom">Alumne/a</th>
+        <th class="sticky-ra" title="Nota de l'RA: ${esc(raNom(raId))}">${esc(escurca(raNom(raId), 12))}</th>
+        ${llista.map(a => `<th class="cap-act ${filtrant ? "" : "mou"}" ${filtrant ? "" : `draggable="true"
+            ondragstart="arrossegaIni(event,'${a.id}')" ondragend="arrossegaFi()"
+            ondragover="arrossegaSobre(event,this)" ondragleave="this.classList.remove('drop-abans','drop-despres')"
+            ondrop="arrossegaSolta(event,'${raId}','${a.id}',this)"`}
+          title="${esc(a.nom)} · ${esc((d.categories.find(c => c.id === a.categoriaId) || {}).nom || "")}"><span>${a.esborrany ? "✎ " : ""}${esc(a.nom)}</span></th>`).join("")}
+      </tr>
+      ${C().alumnes.map(al => {
+        const x = notaRAActivitats(raId, al.id);
+        return `<tr>
+        <td class="sticky-nom"><a class="nom-clic" onclick="anar('alumne:${al.id}')" title="Veure la fitxa de ${esc(al.nom)}">${esc(al.nom)}</a></td>
+        <td class="sticky-ra ${colorNota(x.nota)}">${x.nota === null ? '<span class="mut">—</span>'
+          : `<span class="nota-final ${x.pendent ? "pend" : (!x.completa ? "prov" : "")}">${fmt(x.nota)}${x.pendent ? " ⚑" : (!x.completa ? " *" : "")}</span>`}</td>
+        ${llista.map(a => {
+          const v = a.notes[al.id];
+          if (a.tipus === "fetnofet") {
+            return `<td class="cel-act ${v === undefined ? "" : (v ? "n-ok" : "n-baix")}"><input type="checkbox" ${v ? "checked" : ""}
+              onchange="posaNotaActivitat('${raId}','${a.id}','${al.id}',this.checked)"></td>`;
+          }
+          return `<td class="cel-act ${colorNota(v === undefined || v === "" ? null : Number(v))}"><input class="nota nota-cel" type="number" min="0" max="10" step="0.1" value="${v ?? ""}"
+              onchange="posaNotaActivitat('${raId}','${a.id}','${al.id}',this.value)"></td>`;
+        }).join("")}
+        </tr>`;
+      }).join("")}
+    </table>
+  </div>`;
+}
+/* ---- reordenació d'activitats per arrossegament ----
+   L'ordre viu a l'array d.activitats, així que val per a totes les vistes de l'RA.
+   Només s'activa sense filtre de categoria: amb filtre, "deixar-ho aquí" seria ambigu. */
+let arrossegantAct = null;
+function arrossegaIni(ev, actId) {
+  arrossegantAct = actId;
+  ev.dataTransfer.effectAllowed = "move";
+  try { ev.dataTransfer.setData("text/plain", actId); } catch (e) { /* alguns navegadors ho exigeixen */ }
+}
+function arrossegaFi() {
+  arrossegantAct = null;
+  document.querySelectorAll(".drop-abans,.drop-despres").forEach(el => el.classList.remove("drop-abans", "drop-despres"));
+}
+function arrossegaSobre(ev, th) {
+  if (!arrossegantAct) return;
+  ev.preventDefault();
+  const r = th.getBoundingClientRect();
+  const abans = (ev.clientX - r.left) < r.width / 2;
+  th.classList.toggle("drop-abans", abans);
+  th.classList.toggle("drop-despres", !abans);
+}
+function arrossegaSolta(ev, raId, actIdDesti, th) {
+  ev.preventDefault();
+  const origen = arrossegantAct || ev.dataTransfer.getData("text/plain");
+  arrossegaFi();
+  if (!origen || origen === actIdDesti) return;
+  const r = th.getBoundingClientRect();
+  const abans = (ev.clientX - r.left) < r.width / 2;
+  mut(() => {
+    const llista = C().activitatsRA[raId].activitats;
+    const i = llista.findIndex(a => a.id === origen);
+    if (i < 0) return;
+    const [mogut] = llista.splice(i, 1);
+    let j = llista.findIndex(a => a.id === actIdDesti);
+    if (j < 0) { llista.push(mogut); return; }
+    llista.splice(abans ? j : j + 1, 0, mogut);
+  });
+}
+async function ordenaComClassroom(raId) {
+  const llista = C().activitatsRA[raId].activitats;
+  if (!llista.some(a => a.ordreClassroom !== undefined)) {
+    await alertModal("Cap activitat d'aquest RA ve de Classroom, així que no hi ha cap ordre original a restaurar.");
+    return;
+  }
+  mut(() => {
+    // les que no vénen de Classroom (creades a mà) van al final, mantenint el seu ordre relatiu
+    C().activitatsRA[raId].activitats = llista
+      .map((a, i) => ({ a, i }))
+      .sort((p, q) => {
+        const op = p.a.ordreClassroom ?? Infinity, oq = q.a.ordreClassroom ?? Infinity;
+        return op !== oq ? op - oq : p.i - q.i;
+      })
+      .map(x => x.a);
+  });
+}
+function colorNota(n) {
+  if (n === null || n === undefined || Number.isNaN(n)) return "";
+  return n < 4 ? "n-baix" : n < 5 ? "n-just" : "n-ok";
+}
+function novaCategoria(raId) {
+  mut(() => { C().activitatsRA[raId].categories.push({ id: uid(), nom: "Nova categoria", pes: 0, minim: null }); });
+}
+async function esborraCategoria(raId, catId) {
+  if (!await confirmModal("Esborrar aquesta categoria? Les activitats que en depenen també s'esborraran.")) return;
+  mut(() => {
+    const d = C().activitatsRA[raId];
+    d.categories = d.categories.filter(c => c.id !== catId);
+    d.activitats = d.activitats.filter(a => a.categoriaId !== catId);
+  });
+}
+function usaCategoriaGeneral(raId, genId) {
+  mut(() => {
+    const g = C().categoriesGenerals.find(x => x.id === genId);
+    if (g) C().activitatsRA[raId].categories.push({ id: uid(), nom: g.nom, pes: 0, minim: null });
+  });
+}
+async function novaCategoriaGeneral() {
+  const nom = await promptModal("Nom de la nova categoria general (p. ex. Exàmens):");
+  if (!nom || !nom.trim()) return;
+  mut(() => C().categoriesGenerals.push({ id: uid(), nom: nom.trim() }));
+}
+async function esborraCategoriaGeneral(id) {
+  if (!await confirmModal("Esborrar aquesta categoria de la biblioteca general? No afecta les categories ja creades a cap RA.")) return;
+  mut(() => C().categoriesGenerals = C().categoriesGenerals.filter(g => g.id !== id));
+}
+function novaActivitat(raId) {
+  const d = C().activitatsRA[raId];
+  if (!d.categories.length) return;
+  mut(() => d.activitats.push({ id: uid(), nom: "Nova activitat", categoriaId: d.categories[0].id, tipus: "nota", classroomId: null, notes: {} }));
+}
+async function esborraActivitat(raId, actId) {
+  if (!await confirmModal("Esborrar aquesta activitat i totes les notes que té associades?")) return;
+  mut(() => { const d = C().activitatsRA[raId]; d.activitats = d.activitats.filter(a => a.id !== actId); });
+}
+function posaNotaActivitat(raId, actId, alId, val) {
+  mut(() => {
+    const a = C().activitatsRA[raId].activitats.find(x => x.id === actId);
+    if (a.tipus === "fetnofet") { a.notes[alId] = !!val; return; }
+    if (val === "") delete a.notes[alId]; else a.notes[alId] = clamp(Number(val), 0, 10);
+  });
+}
+
+/* ---- Importació des de Google Classroom (només disponible desplegat com a app de Google) ---- */
+/* Tria de curs amb desplegable: mostra nom i secció, sense haver d'escriure cap número ni id. */
+async function triaCursClassroom(cursos, text) {
+  return await selectModal(text, cursos.map(c => ({ valor: c.id, etiqueta: c.nom, sub: c.seccio || "" })));
+}
+
+async function obreImportAlumnesClassroom() {
+  if (!enGAS) return;
+  try {
+    setEstat("saving", "Consultant Classroom…");
+    const cursos = await gasCrida("llistaCursosClassroom");
+    if (!cursos.length) { await alertModal("No s'ha trobat cap curs actiu a Classroom amb aquest compte de Google."); render(); return; }
+    const courseId = await triaCursClassroom(cursos, "De quin curs de Classroom vols importar l'alumnat?");
+    if (!courseId) { render(); return; }
+    const curs = cursos.find(c => c.id === courseId);
+    const alumnesC = await gasCrida("importaAlumnesClassroom", courseId);
+    let noves = 0;
+    mut(() => {
+      for (const ac of alumnesC) {
+        const existent = C().alumnes.find(a => a.classroomId === ac.classroomId);
+        if (existent) existent.nom = ac.nom;
+        else { C().alumnes.push({ id: uid(), nom: ac.nom, classroomId: ac.classroomId }); noves++; }
+      }
+    });
+    await alertModal(`Importació completa de «${curs.nom}»: ${alumnesC.length} alumnes trobats (${noves} de nous). No s'ha esborrat ningú.`);
+  } catch (e) { await alertModal("Error important de Classroom: " + e); render(); }
+}
+async function obreImportClassroom(raId) {
+  if (!enGAS) return;
+  try {
+    setEstat("saving", "Consultant Classroom…");
+    const cursos = await gasCrida("llistaCursosClassroom");
+    if (!cursos.length) { await alertModal("No s'ha trobat cap curs actiu a Classroom amb aquest compte de Google."); render(); return; }
+    const courseId = await triaCursClassroom(cursos, "De quin curs vols importar les tasques (activitats)?");
+    if (!courseId) { render(); return; }
+    const curs = cursos.find(c => c.id === courseId);
+    const d = C().activitatsRA[raId];
+    if (!d.categories.length) { await alertModal("Crea primer una categoria per assignar-hi les activitats importades."); render(); return; }
+    const categoriaPerDefecte = await selectModal(
+      "A quina categoria aniran les tasques SENSE categoria a Classroom?\n(Les que en tinguin s'assignaran a la categoria equivalent d'aquest RA, creant-la si cal.)",
+      d.categories.map(x => ({ valor: x.id, etiqueta: x.nom })));
+    if (!categoriaPerDefecte) { render(); return; }
+    const treballs = await gasCrida("importaActivitatsClassroom", courseId);
+    let noves = 0, catsNoves = 0, notesNoves = 0;
+    const mapaAlumnes = {};
+    C().alumnes.forEach(a => { if (a.classroomId) mapaAlumnes[a.classroomId] = a.id; });
+    mut(() => {
+      for (const t of treballs) {
+        const catId = resolCategoria(d, t, categoriaPerDefecte, () => catsNoves++);
+        const deClassroom = notesDesDeClassroom(t, mapaAlumnes);
+        const existent = d.activitats.find(a => a.classroomId === t.classroomId);
+        if (existent) {
+          existent.nom = t.nom; existent.esborrany = !!t.esborrany;
+          if (t.rubrica) existent.rubrica = t.rubrica;
+          if (!existent.categoriaId) existent.categoriaId = catId;
+          // no es trepitgen les notes que ja hi hagi a l'app: només s'omplen els buits
+          for (const [alId, v] of Object.entries(deClassroom)) {
+            if (existent.notes[alId] === undefined) { existent.notes[alId] = v; notesNoves++; }
+          }
+        } else {
+          d.activitats.push({ id: uid(), nom: t.nom, categoriaId: catId, ordreClassroom: treballs.indexOf(t), tipus: t.maxPoints ? "nota" : "fetnofet",
+            classroomId: t.classroomId, esborrany: !!t.esborrany, rubrica: t.rubrica || null, rubricaSel: {}, notes: deClassroom });
+          noves++; notesNoves += Object.keys(deClassroom).length;
+        }
+      }
+    });
+    const draftsN = treballs.filter(t => t.esborrany).length;
+    await alertModal(`Importació completa de «${curs.nom}»: ${treballs.length} tasques trobades (${noves} de noves${draftsN ? `, ${draftsN} en esborrany` : ""})${catsNoves ? `, ${catsNoves} categoria/es creada/es` : ""}${notesNoves ? `, ${notesNoves} notes importades de Classroom` : ""}. No s'ha esborrat ni sobreescrit cap nota que ja tinguessis.`);
+  } catch (e) { await alertModal("Error important de Classroom: " + e); render(); }
+}
+/* Passa les notes ja posades a Classroom a l'escala 0–10 de l'app.
+   Classroom puntua sobre maxPoints (p. ex. 20), així que es reescala; les tasques sense
+   maxPoints (Fet/No fet) es marquen com a fetes si tenen qualsevol nota registrada.
+   mapaAlumnes: classroomUserId -> id d'alumne dins l'app. */
+function notesDesDeClassroom(treball, mapaAlumnes) {
+  const dest = {};
+  const fetNoFet = !treball.maxPoints;
+  for (const [userId, info] of Object.entries(treball.notes || {})) {
+    const alId = mapaAlumnes[userId];
+    if (!alId) continue;
+    dest[alId] = fetNoFet ? true : clamp(Math.round((Number(info.punts) / treball.maxPoints) * 100) / 10, 0, 10);
+  }
+  return dest;
+}
+function comptaNotesImportades(activitats) {
+  return activitats.reduce((s, t) => s + Object.keys(t.notes || {}).length, 0);
+}
+
+/* Troba (o crea) dins d'un RA la categoria equivalent a la que la tasca té a Classroom.
+   Es lliga per classroomId i, si no, pel nom; si la tasca no en té cap, cau a la de per defecte. */
+function resolCategoria(d, treball, categoriaPerDefecte, onCrea) {
+  if (!treball.categoriaClassroomId && !treball.categoriaNom) return categoriaPerDefecte;
+  let cat = d.categories.find(c => c.classroomId && c.classroomId === treball.categoriaClassroomId)
+    || d.categories.find(c => treball.categoriaNom && c.nom.toLowerCase() === treball.categoriaNom.toLowerCase());
+  if (cat) { if (!cat.classroomId) cat.classroomId = treball.categoriaClassroomId; return cat.id; }
+  cat = { id: uid(), nom: treball.categoriaNom || "Categoria", pes: 0, minim: null, classroomId: treball.categoriaClassroomId };
+  d.categories.push(cat);
+  if (onCrea) onCrea();
+  return cat.id;
+}
+/* Crea un grup-aula sencer a partir d'un curs de Google Classroom:
+   alumnat + categories de qualificació (amb el seu pes) + tasques amb la categoria assignada. */
+/* ================= Sincronització amb Classroom =================
+   Reimporta el curs ja vinculat i concilia temes→RA, tasques→activitats, alumnat i notes.
+   Sempre additiva: res del que hagis fet a l'app s'esborra; el que ha desaparegut de
+   Classroom només es marca, perquè esborrar-ho podria fer perdre notes. */
+async function sincronitzaClassroom() {
+  if (!enGAS) return;
+  try {
+    let courseId = C().classroomCourseId;
+    setEstat("saving", "Consultant Classroom…");
+    const cursos = await gasCrida("llistaCursosClassroom");
+    if (!cursos.length) { await alertModal("No s'ha trobat cap curs actiu a Classroom amb aquest compte."); render(); return; }
+    if (!courseId || !cursos.some(x => x.id === courseId)) {
+      courseId = await triaCursClassroom(cursos, "Aquest grup-aula encara no està vinculat a cap curs de Classroom.\nAmb quin el vols sincronitzar?");
+      if (!courseId) { render(); return; }
+    }
+    const qNotes = await selectModal("Què vull fer amb les notes que ja tinc a l'aplicació?", [
+      { valor: "buits", etiqueta: "Només omplir els buits", sub: "no toca el que ja has posat" },
+      { valor: "sobre", etiqueta: "Sobreescriure amb les de Classroom", sub: "Classroom mana" },
+    ], { valorInicial: "buits" });
+    if (!qNotes) { render(); return; }
+
+    setEstat("saving", "Sincronitzant…");
+    const dades = await gasCrida("importaCursClassroom", courseId);
+    const c = C();
+
+    /* ---- alumnat ---- */
+    const perClassroomId = {};
+    c.alumnes.forEach(a => { if (a.classroomId) perClassroomId[a.classroomId] = a; });
+    const alumnesNous = dades.alumnes.filter(a => !perClassroomId[a.classroomId]);
+    const alumnesRenom = dades.alumnes.filter(a => perClassroomId[a.classroomId] && perClassroomId[a.classroomId].nom !== a.nom);
+    const idsClassroom = new Set(dades.alumnes.map(a => a.classroomId));
+    const alumnesFora = c.alumnes.filter(a => a.classroomId && !idsClassroom.has(a.classroomId) && !a.foraClassroom);
+
+    /* ---- temes → RA ---- */
+    const grups = new Map();
+    (dades.temes || []).forEach(t => grups.set(t.id, { clau: t.id, nom: t.nom, activitats: [] }));
+    for (const t of dades.activitats) {
+      const clau = t.temaId || "__sense__";
+      if (!grups.has(clau)) grups.set(clau, { clau, nom: t.temaNom || "Sense tema", activitats: [] });
+      grups.get(clau).activitats.push(t);
+    }
+    const ambFeina = [...grups.values()].filter(g => g.activitats.length);
+    const raPerTema = new Map();   // clau de tema -> RA existent
+    const raNous = [], raRenom = [];
+    for (const g of ambFeina) {
+      // 1r pel tema desat; 2n pel nom (per a grups-aula importats abans que es desés el tema)
+      let ra = c.config.ras.find(r => r.classroomTopicId && r.classroomTopicId === g.clau)
+        || c.config.ras.find(r => !r.classroomTopicId && raMode(r) === "activitats" && r.nom.trim().toLowerCase() === (g.nom || "").trim().toLowerCase());
+      if (ra) {
+        raPerTema.set(g.clau, ra);
+        if (ra.nom !== g.nom && g.nom) raRenom.push({ ra, nou: g.nom });
+      } else {
+        // l'RA encara no existeix: el prepararem, però ja li donem id ara per poder-hi
+        // assignar activitats en aquesta mateixa passada de planificació
+        const ra = { id: uid(), nom: (g.nom || "").trim() || "Tema nou",
+          classroomTopicId: g.clau === "__sense__" ? null : g.clau, pes: 0, mode: "activitats" };
+        raNous.push({ g, ra });
+        raPerTema.set(g.clau, ra);
+      }
+    }
+
+    /* ---- activitats ---- */
+    const actPerClassroomId = new Map();  // classroomId -> {raId, act}
+    for (const [raId, d] of Object.entries(c.activitatsRA)) {
+      (d.activitats || []).forEach(a => { if (a.classroomId) actPerClassroomId.set(a.classroomId, { raId, act: a }); });
+    }
+    const actNoves = [], actMogudes = [], actActualitzades = [];
+    for (const g of ambFeina) {
+      const raDesti = raPerTema.get(g.clau);
+      for (const t of g.activitats) {
+        const trobada = actPerClassroomId.get(t.classroomId);
+        if (!trobada) { actNoves.push({ g, t }); continue; }
+        if (raDesti && trobada.raId !== raDesti.id) actMogudes.push({ t, de: trobada.raId, a: raDesti.id, act: trobada.act });
+        else if (trobada.act.nom !== t.nom || !!trobada.act.esborrany !== !!t.esborrany || (t.rubrica && !trobada.act.rubrica))
+          actActualitzades.push({ t, ref: trobada });
+      }
+    }
+    const idsCw = new Set(dades.activitats.map(t => t.classroomId));
+    const actFora = [...actPerClassroomId.entries()].filter(([cid, v]) => !idsCw.has(cid) && !v.act.foraClassroom);
+
+    /* ---- notes ---- */
+    const mapaAl = {};
+    c.alumnes.forEach(a => { if (a.classroomId) mapaAl[a.classroomId] = a.id; });
+    dades.alumnes.forEach(a => { if (!mapaAl[a.classroomId]) mapaAl[a.classroomId] = null; }); // els nous es resolen en aplicar
+    let notesCompte = 0;
+    for (const t of dades.activitats) {
+      const n = Object.keys(t.notes || {}).length;
+      if (!n) continue;
+      const trobada = actPerClassroomId.get(t.classroomId);
+      if (!trobada) { notesCompte += n; continue; }
+      for (const [userId, info] of Object.entries(t.notes)) {
+        const alId = mapaAl[userId];
+        if (alId === undefined) continue;
+        if (alId === null) { notesCompte++; continue; }
+        if (qNotes === "sobre" || trobada.act.notes[alId] === undefined) notesCompte++;
+      }
+    }
+
+    const res = [];
+    if (alumnesNous.length) res.push(`· ${alumnesNous.length} alumne/s nou/s`);
+    if (alumnesRenom.length) res.push(`· ${alumnesRenom.length} nom/s d'alumne actualitzat/s`);
+    if (alumnesFora.length) res.push(`· ${alumnesFora.length} alumne/s que ja no són a Classroom (es marcaran, no s'esborren)`);
+    if (raNous.length) res.push(`· ${raNous.length} tema/es nou/s → es crearan com a RA: ${raNous.map(x => "«" + x.ra.nom + "»").join(", ")}`);
+    if (raRenom.length) res.push(`· ${raRenom.length} RA es reanomenaran per seguir el tema`);
+    if (actNoves.length) res.push(`· ${actNoves.length} activitat/s nova/es`);
+    if (actMogudes.length) res.push(`· ${actMogudes.length} activitat/s que han canviat de tema (es mouran d'RA)`);
+    if (actActualitzades.length) res.push(`· ${actActualitzades.length} activitat/s amb canvis (nom, esborrany o rúbrica)`);
+    if (actFora.length) res.push(`· ${actFora.length} activitat/s que ja no són a Classroom (es marcaran, no s'esborren)`);
+    if (notesCompte) res.push(`· ${notesCompte} nota/es ${qNotes === "sobre" ? "a sobreescriure" : "a omplir"}`);
+    if (!res.length) { await alertModal(`Tot està al dia: no hi ha cap canvi a portar de «${dades.nom}».`); render(); return; }
+    if (!await confirmModal(`Sincronitzar amb «${dades.nom}»?\n\n${res.join("\n")}\n\nNo s'esborrarà res del que tinguis a l'aplicació.`)) { render(); return; }
+
+    /* ---- aplicar ---- */
+    mut(() => {
+      const c = C();
+      c.classroomCourseId = courseId;
+      // alumnat
+      alumnesNous.forEach(a => c.alumnes.push({ id: uid(), nom: a.nom, classroomId: a.classroomId }));
+      alumnesRenom.forEach(a => { const ex = c.alumnes.find(x => x.classroomId === a.classroomId); if (ex) ex.nom = a.nom; });
+      alumnesFora.forEach(a => { a.foraClassroom = true; });
+      const mapa = {};
+      c.alumnes.forEach(a => { if (a.classroomId) mapa[a.classroomId] = a.id; });
+      // RA nous i reanomenats
+      raRenom.forEach(({ ra, nou }) => { ra.nom = nou; });
+      for (const { ra } of raNous) {
+        c.config.ras.push(ra);
+        c.activitatsRA[ra.id] = { categories: [], activitats: [] };
+      }
+      // deixa desat el tema als RA que s'havien lligat pel nom
+      for (const [clau, ra] of raPerTema) if (!ra.classroomTopicId && clau !== "__sense__") ra.classroomTopicId = clau;
+
+      const catsCurs = dades.categories || [];
+      const categoriaPer = (d, t) => {
+        if (!t.categoriaClassroomId && !t.categoriaNom) {
+          let cap = d.categories.find(x => x.nom === "Sense categoria");
+          if (!cap) { cap = { id: uid(), nom: "Sense categoria", pes: 0, minim: null, classroomId: null }; d.categories.push(cap); }
+          return cap.id;
+        }
+        let cat = d.categories.find(x => x.classroomId && x.classroomId === t.categoriaClassroomId)
+          || d.categories.find(x => t.categoriaNom && x.nom.toLowerCase() === t.categoriaNom.toLowerCase());
+        if (!cat) {
+          const orig = catsCurs.find(x => x.classroomId === t.categoriaClassroomId);
+          cat = { id: uid(), nom: t.categoriaNom || (orig ? orig.nom : "Categoria"), pes: orig ? orig.pes : 0, minim: null, classroomId: t.categoriaClassroomId };
+          d.categories.push(cat);
+        }
+        return cat.id;
+      };
+      const aplicaNotes = (act, t) => {
+        for (const [userId, info] of Object.entries(t.notes || {})) {
+          const alId = mapa[userId];
+          if (!alId) continue;
+          const v = t.maxPoints ? clamp(Math.round((Number(info.punts) / t.maxPoints) * 100) / 10, 0, 10) : true;
+          if (qNotes === "sobre" || act.notes[alId] === undefined) act.notes[alId] = v;
+        }
+      };
+      // activitats mogudes d'RA
+      for (const m of actMogudes) {
+        const origen = c.activitatsRA[m.de], desti = c.activitatsRA[m.a];
+        origen.activitats = origen.activitats.filter(x => x.id !== m.act.id);
+        m.act.categoriaId = categoriaPer(desti, m.t);
+        m.act.nom = m.t.nom; m.act.esborrany = !!m.t.esborrany;
+        if (m.t.rubrica) m.act.rubrica = m.t.rubrica;
+        aplicaNotes(m.act, m.t);
+        desti.activitats.push(m.act);
+      }
+      // activitats actualitzades
+      for (const u of actActualitzades) {
+        u.ref.act.nom = u.t.nom;
+        u.ref.act.esborrany = !!u.t.esborrany;
+        if (u.t.rubrica) u.ref.act.rubrica = u.t.rubrica;
+      }
+      // notes de les que ja existien i no s'han mogut
+      for (const t of dades.activitats) {
+        const trobada = actPerClassroomId.get(t.classroomId);
+        if (trobada && !actMogudes.some(m => m.act.id === trobada.act.id)) aplicaNotes(trobada.act, t);
+      }
+      // activitats noves
+      for (const { g, t } of actNoves) {
+        const ra = raPerTema.get(g.clau);
+        if (!ra) continue;
+        const d = c.activitatsRA[ra.id] || (c.activitatsRA[ra.id] = { categories: [], activitats: [] });
+        const act = { id: uid(), nom: t.nom, categoriaId: categoriaPer(d, t), ordreClassroom: dades.activitats.indexOf(t), tipus: t.maxPoints ? "nota" : "fetnofet",
+          classroomId: t.classroomId, esborrany: !!t.esborrany, rubrica: t.rubrica || null, rubricaSel: {}, notes: {} };
+        aplicaNotes(act, t);
+        d.activitats.push(act);
+      }
+      // el que ja no hi és a Classroom: només es marca
+      actFora.forEach(([cid, v]) => { v.act.foraClassroom = true; });
+    });
+    await alertModal(`Sincronització feta amb «${dades.nom}».\n\n${res.join("\n")}`);
+  } catch (e) { await alertModal("Error sincronitzant amb Classroom: " + e); render(); }
+}
+
+async function nouCursDesDeClassroom() {
+  if (!enGAS) return;
+  try {
+    setEstat("saving", "Consultant Classroom…");
+    const cursos = await gasCrida("llistaCursosClassroom");
+    if (!cursos.length) { await alertModal("No s'ha trobat cap curs actiu a Classroom amb aquest compte de Google."); render(); return; }
+    const courseId = await triaCursClassroom(cursos, "De quin curs de Classroom vols crear un grup-aula nou?");
+    if (!courseId) { render(); return; }
+    setEstat("saving", "Important el curs… (pot trigar una mica si hi ha rúbriques)");
+    const dades = await gasCrida("importaCursClassroom", courseId);
+
+    /* Un RA per tema de Classroom. Les tasques sense tema van a un RA "Sense tema".
+       Cada RA té la seva còpia de les categories de qualificació que les seves tasques facin servir,
+       conservant el pes que tenen a Classroom. */
+    const grups = [];                       // [{clau, nom, activitats[]}]
+    const perClau = new Map();
+    const grupDe = (clau, nom) => {
+      if (!perClau.has(clau)) { const g = { clau, nom, activitats: [] }; perClau.set(clau, g); grups.push(g); }
+      return perClau.get(clau);
+    };
+    // Primer els temes en l'ordre de Classroom, perquè els RA surtin ordenats com al curs
+    (dades.temes || []).forEach(t => grupDe(t.id, t.nom));
+    for (const t of dades.activitats) grupDe(t.temaId || "__sense__", t.temaNom || "Sense tema").activitats.push(t);
+    // Temes buits: no generen RA
+    const ambFeina = grups.filter(g => g.activitats.length);
+    if (!ambFeina.length) ambFeina.push({ clau: "__sense__", nom: "Resultat d'aprenentatge 1", activitats: [] });
+
+    const catsCurs = dades.categories || [];
+    const pesRA = Math.round(100 / ambFeina.length);
+    const ras = [], activitatsRA = {};
+    ambFeina.forEach((g, i) => {
+      const raId = uid(); // clau interna; de cara a l'usuari l'RA només té nom
+      g.raId = raId;
+      // pes: repartit a parts iguals, i l'últim absorbeix el residu perquè sumi 100 exacte
+      // si el tema de Classroom no té nom, l'RA es queda amb el seu propi codi com a nom
+      // el nom de l'RA és el nom del tema de Classroom
+      // es desa el tema de Classroom que representa aquest RA: és el que permet resincronitzar després
+      ras.push({ id: raId, nom: (g.nom || "").trim() || `Tema ${i + 1}`, classroomTopicId: g.clau === "__sense__" ? null : g.clau,
+        pes: i === ambFeina.length - 1 ? 100 - pesRA * (ambFeina.length - 1) : pesRA, mode: "activitats" });
+      const d = { categories: [], activitats: [] };
+      let capCategoria = null;
+      const senseCategoria = () => {
+        if (!capCategoria) { capCategoria = { id: uid(), nom: "Sense categoria", pes: 0, minim: null, classroomId: null }; d.categories.push(capCategoria); }
+        return capCategoria.id;
+      };
+      for (const t of g.activitats) {
+        let catId;
+        if (t.categoriaClassroomId || t.categoriaNom) {
+          // la categoria es copia dins d'aquest RA amb el pes que tenia a Classroom
+          let cat = d.categories.find(x => x.classroomId && x.classroomId === t.categoriaClassroomId)
+            || d.categories.find(x => t.categoriaNom && x.nom.toLowerCase() === (t.categoriaNom || "").toLowerCase());
+          if (!cat) {
+            const orig = catsCurs.find(x => x.classroomId === t.categoriaClassroomId);
+            cat = { id: uid(), nom: t.categoriaNom || (orig ? orig.nom : "Categoria"), pes: orig ? orig.pes : 0, minim: null, classroomId: t.categoriaClassroomId };
+            d.categories.push(cat);
+          }
+          catId = cat.id;
+        } else catId = senseCategoria();
+        d.activitats.push({
+          id: uid(), nom: t.nom, categoriaId: catId, ordreClassroom: dades.activitats.indexOf(t),
+          tipus: t.maxPoints ? "nota" : "fetnofet",
+          classroomId: t.classroomId, esborrany: !!t.esborrany,
+          rubrica: t.rubrica || null, rubricaSel: {}, notes: {},
+        });
+      }
+      activitatsRA[raId] = d;
+    });
+
+    const alumnesApp = dades.alumnes.map(a => ({ id: uid(), nom: a.nom, classroomId: a.classroomId }));
+    const mapaAlumnes = {};
+    alumnesApp.forEach(a => { mapaAlumnes[a.classroomId] = a.id; });
+    // les notes ja posades a Classroom (publicades o en esborrany) es porten cap a les activitats
+    ambFeina.forEach(g => g.activitats.forEach(t => {
+      const act = activitatsRA[g.raId].activitats.find(x => x.classroomId === t.classroomId);
+      if (act) act.notes = notesDesDeClassroom(t, mapaAlumnes);
+    }));
+
+    mut(() => {
+      const nou = nouCursBuit(dades.nom, dades.seccio || "Grup 1");
+      nou.classroomCourseId = dades.courseId;
+      nou.alumnes = alumnesApp;
+      nou.reptes = []; // un curs importat de Classroom arrenca sense reptes: tot són activitats
+      nou.config.ras = ras;
+      nou.activitatsRA = activitatsRA;
+      state.cursos.push(nou);
+      state.cursActual = nou.id;
+      anarPrimeraVistaDelCurs();
+    });
+
+    const totalAct = ambFeina.reduce((s, g) => s + g.activitats.length, 0);
+    const totalEsb = dades.activitats.filter(a => a.esborrany).length;
+    const ambRubrica = dades.activitats.filter(a => a.rubrica).length;
+    const senseTema = dades.activitats.filter(a => !a.temaId).length;
+    const catsFora = ras.map(r => {
+      const suma = activitatsRA[r.id].categories.reduce((s, x) => s + (Number(x.pes) || 0), 0);
+      return suma === 100 ? null : `«${r.nom}» (${suma}%)`;
+    }).filter(Boolean);
+    await alertModal(
+      `Grup-aula creat des de «${dades.nom}»:\n`
+      + `· ${dades.alumnes.length} alumnes\n`
+      + `· ${ras.length} RA, un per cada tema de Classroom (amb el nom del tema)\n`
+      + `· ${totalAct} activitats${totalEsb ? ` (${totalEsb} en esborrany)` : ""}${ambRubrica ? `, ${ambRubrica} amb rúbrica` : ""}\n`
+      + `· ${comptaNotesImportades(dades.activitats)} notes ja posades a Classroom, importades\n`
+      + (senseTema ? `· ${senseTema} tasques sense tema han anat a l'RA «Sense tema»\n` : "")
+      + `\nEl pes de cada RA s'ha repartit a parts iguals: ajusta'l a Configuració si cal.`
+      + (catsFora.length ? `\n\nLes categories no sumen 100% a: ${catsFora.join(", ")}. Classroom reparteix el pes entre totes les categories del curs, així que en separar-les per tema cal reajustar-les.` : ""));
+  } catch (e) { await alertModal("Error important de Classroom: " + e); render(); }
+}
+
+/* ---- Nota del mòdul ---- */
+/* ---- RA en mode "directe": pàgina pròpia, sense subpestanyes ---- */
+async function canviaModeRA(raId, mode) {
+  const ra = raConf(raId);
+  if (mode === "reptes" && C().reptes.some(r => r.ras.includes(raId))) {
+    // ja hi ha reptes que el treballen: no cal avisar, simplement reprèn aquest mode
+  } else if (ra.mode === "reptes" && mode !== "reptes" && C().reptes.some(r => r.ras.includes(raId))) {
+    if (!await confirmModal(`Hi ha reptes que treballen «${raNom(raId)}». Si canvies de mode, deixaran de comptar-hi (no s'esborren, però caldrà desmarcar-los manualment si vols reassignar-los). Continuar?`)) { render(); return; }
+  }
+  mut(() => {
+    ra.mode = mode;
+    ra.directe = mode === "directe"; // es manté per compatibilitat amb exportacions anteriors
+    if (mode === "activitats" && !C().activitatsRA[raId]) C().activitatsRA[raId] = { categories: [], activitats: [] };
+  });
+}
+async function afegeixRA() {
+  const nom = await promptModal("Nom del nou resultat d'aprenentatge:");
+  if (!nom || !nom.trim()) return;
+  mut(() => {
+    const id = uid(); // clau interna, no es mostra mai
+    C().config.ras.push({ id, nom: nom.trim(), pes: 0, mode: "activitats" });
+    C().activitatsRA[id] = { categories: [], activitats: [] };
+  });
+}
+async function esborraRA(id) {
+  const ra = raConf(id);
+  if (!await confirmModal(`Esborrar el resultat d'aprenentatge «${ra.nom}»? Es traurà de qualsevol repte que el treballi i s'esborraran les seves categories/activitats o nota directa. Aquesta acció no es pot desfer.`)) return;
+  mut(() => {
+    const c = C();
+    c.config.ras = c.config.ras.filter(r => r.id !== id);
+    c.reptes.forEach(r => { r.ras = r.ras.filter(x => x !== id); r.instruments.forEach(i => delete i.pes[id]); });
+    delete c.activitatsRA[id];
+    delete c.notesDirectes[id];
+    if (vista === "ra:" + id) { vista = "grup"; landingTab = "configuracio"; }
+  });
+}
+function posaDirecta(raId, alId, val) {
+  mut(() => {
+    if (!C().notesDirectes[raId]) C().notesDirectes[raId] = {};
+    if (val === "") delete C().notesDirectes[raId][alId];
+    else C().notesDirectes[raId][alId] = clamp(Number(val), 0, 10);
+  });
+}
+function exportaCSVModul() {
+  const sep = ";", ras = C().config.ras;
+  let out = ["Alumne", ...ras.map(r => r.id), "Mòdul", "Estat"].join(sep) + "\n";
+  for (const al of C().alumnes) {
+    const vals = ras.map(ra => { const x = notaRAModul(al.id, ra.id); return x.nota === null ? "" : x.nota.toFixed(2).replace(".", ","); });
+    const m = notaModul(al.id);
+    const pend = ras.some(ra => notaRAModul(al.id, ra.id).pendent);
+    out += [al.nom, ...vals, m.nota === null ? "" : m.nota.toFixed(2).replace(".", ","), pend ? "PENDENT" : (m.completa ? "Completa" : "Provisional")].join(sep) + "\n";
+  }
+  baixa("notes_modul.csv", out, "text/csv");
+}
+
+async function esborraAlumne(id) {
+  const al = alumne(id);
+  if (!await confirmModal(`Segur que vols esborrar ${al.nom} i totes les seves notes de tots els reptes?`)) return;
+  mut(() => {
+    C().alumnes = C().alumnes.filter(a => a.id !== id);
+    for (const rep of C().reptes) {
+      rep.equips.forEach(e => e.membres = e.membres.filter(m => m !== id));
+      for (const k of Object.keys(rep.avaluacions.individual)) delete rep.avaluacions.individual[k][id];
+      for (const k of Object.keys(rep.avaluacions.factors)) delete rep.avaluacions.factors[k][id];
+    }
+    for (const k of Object.keys(C().notesDirectes)) delete C().notesDirectes[k][id];
+  });
+}
+
+/* ---- Dades ---- */
+/* ---- Seguretat: bloqueig amb contrasenya (protecció bàsica, no xifratge) ---- */
+async function hashText(text) {
+  const s = "av2000::" + text;
+  try {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+  } catch (e) {
+    // entorn sense crypto.subtle (context no segur, p. ex. file:// en alguns navegadors): hash de reserva
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return "f" + h.toString(16);
+  }
+}
+function vSeguretat() {
+  const s = state.seguretat;
+  return `
+  <div class="crumb">Configuració general</div>
+  <h1>Seguretat</h1>
+  <p class="lead">Protegeix l'accés a l'aplicació amb una contrasenya. És una protecció bàsica pensada per evitar que algú miri per sobre l'espatlla en un ordinador compartit: les dades es continuen desant sense xifrar, i si oblides la contrasenya no hi ha manera automàtica de recuperar-la (caldria esborrar les dades desades del navegador o del fitxer per tornar a accedir-hi).</p>
+  <div class="card" style="max-width:520px">
+    <label class="switch-row"><input type="checkbox" ${s.activat ? "checked" : ""} onchange="toggleProteccio(this.checked)"> Protegir el portal amb contrasenya</label>
+    ${s.activat ? `
+    <div style="margin-top:16px">
+      <div class="toolrow">
+        <input id="pw-nova" type="password" class="inline" placeholder="Nova contrasenya" style="max-width:190px" autocomplete="new-password">
+        <input id="pw-confirma" type="password" class="inline" placeholder="Confirma-la" style="max-width:190px" autocomplete="new-password">
+        <button class="btn pri" onclick="desaContrasenya()">${s.hash ? "Canvia la contrasenya" : "Desa la contrasenya"}</button>
+      </div>
+      ${s.hash ? '<p class="tiny mut" style="margin-top:8px">✓ Ja hi ha una contrasenya activa.</p>'
+        : '<div class="avis roig">Encara no has desat cap contrasenya: el bloqueig no s\'activarà fins que en desis una.</div>'}
+      <div class="toolrow" style="margin-top:16px">
+        <label class="tiny soft" for="mins-inactivitat">Bloqueig automàtic per inactivitat</label>
+        <input id="mins-inactivitat" class="nota" type="number" min="0" step="1" style="max-width:70px" value="${s.minutsInactivitat ?? ""}" placeholder="—"
+          onchange="canviaMinutsInactivitat(this.value)">
+        <span class="tiny mut">minuts (buit = no bloquegis mai automàticament)</span>
+      </div>
+      <div class="toolrow" style="margin-top:16px">
+        <button class="btn" ${s.hash ? "" : "disabled"} onclick="bloqueja()">Bloqueja ara</button>
+      </div>
+    </div>` : ""}
+  </div>`;
+}
+function toggleProteccio(on) {
+  mut(() => { state.seguretat.activat = on; if (!on) { state.seguretat.hash = null; clearTimeout(inactivityTimer); } });
+}
+async function desaContrasenya() {
+  const pw = $("#pw-nova").value, pw2 = $("#pw-confirma").value;
+  if (!pw || pw.length < 4) { await alertModal("La contrasenya ha de tenir com a mínim 4 caràcters."); return; }
+  if (pw !== pw2) { await alertModal("Les dues contrasenyes no coincideixen."); return; }
+  const hash = await hashText(pw);
+  mut(() => { state.seguretat.hash = hash; });
+  reiniciaTemporitzadorInactivitat();
+  await alertModal("Contrasenya desada.");
+}
+function canviaMinutsInactivitat(v) {
+  mut(() => { state.seguretat.minutsInactivitat = v === "" ? null : Math.max(0, Math.round(Number(v) || 0)); });
+  reiniciaTemporitzadorInactivitat();
+}
+/* ---- pantalla de bloqueig ---- */
+let inactivityTimer = null;
+function mostraBloqueig() {
+  clearTimeout(inactivityTimer);
+  $("#app").style.visibility = "hidden";
+  $("#lock-screen").style.display = "flex";
+  setTimeout(() => { const el = $("#lock-pw"); if (el) el.focus(); }, 0);
+}
+function amagaBloqueig() {
+  $("#lock-screen").style.display = "none";
+  $("#app").style.visibility = "visible";
+}
+function bloqueja() {
+  if (!state || !state.seguretat.activat || !state.seguretat.hash) return; // sense estat carregat o sense contrasenya desada no bloquegem: deixaria l'usuari fora
+  mostraBloqueig();
+}
+async function intentaDesbloqueig() {
+  const pw = $("#lock-pw").value;
+  const hash = await hashText(pw);
+  if (hash === state.seguretat.hash) {
+    $("#lock-pw").value = "";
+    $("#lock-error").style.display = "none";
+    amagaBloqueig();
+    render();
+    reiniciaTemporitzadorInactivitat();
+  } else {
+    $("#lock-error").style.display = "block";
+    $("#lock-pw").value = "";
+    $("#lock-pw").focus();
+  }
+}
+function reiniciaTemporitzadorInactivitat() {
+  clearTimeout(inactivityTimer);
+  if (!state || !state.seguretat.activat || !state.seguretat.hash || !state.seguretat.minutsInactivitat) return;
+  inactivityTimer = setTimeout(bloqueja, state.seguretat.minutsInactivitat * 60000);
+}
+["mousemove", "keydown", "mousedown", "touchstart", "scroll"].forEach(ev =>
+  document.addEventListener(ev, () => { if ($("#lock-screen").style.display !== "flex") reiniciaTemporitzadorInactivitat(); }, { passive: true }));
+
+function vDades() {
+  return `
+  <div class="crumb">Persistència i còpies</div>
+  <h1>Dades</h1>
+  <p class="lead">Les dades es desen automàticament al magatzem persistent a cada canvi. A més, pots exportar-ho tot (tots els grups-aula) a un fitxer de text JSON i reimportar-lo quan calgui.</p>
+  <div class="card" style="max-width:640px">
+    <h2>On es desa ara mateix</h2>
+    ${backend === "gas" ? `
+      <p>Aplicació web de Google <span class="badge b-verd">activa</span>: cada canvi es desa automàticament al fitxer <b>avaluacio_mp8.json</b> del teu Google Drive. Hi pots accedir des de qualsevol dispositiu amb el teu compte.</p>`
+    : backend === "claude" ? `
+      <p>Magatzem persistent de Claude <span class="badge b-verd">actiu</span>: els canvis es conserven automàticament entre sessions en aquest compte.</p>`
+    : backend === "local" ? `
+      <p>Còpia automàtica al navegador <span class="badge b-verd">activa</span> (es conserva mentre no esborris les dades de navegació d'aquest lloc).</p>
+      <p style="margin-top:8px">Fitxer local d'autoguardat:
+        ${fitxerHandle && !calReconnectar ? `<span class="badge b-verd">connectat</span> «${esc(fitxerNom)}» — cada canvi s'hi escriu automàticament.`
+        : fitxerHandle && calReconnectar ? `<span class="badge b-ambre">pendent de permís</span> «${esc(fitxerNom)}»`
+        : `<span class="badge b-gris">no connectat</span>`}</p>
+      <div class="toolrow" style="margin:10px 0 0">
+        ${fitxerHandle && calReconnectar ? `<button class="btn pri" onclick="reconnectaFitxer()">Reconnecta el fitxer</button>` : ""}
+        ${!fitxerHandle ? `<button class="btn pri" onclick="connectaFitxer()">Connecta un fitxer local…</button>` : `<button class="btn" onclick="connectaFitxer()">Canvia de fitxer…</button><button class="btn peril" onclick="desconnectaFitxer()">Desconnecta</button>`}
+      </div>
+      <p class="tiny mut" style="margin-top:10px">${suportaFSA
+        ? "En connectar un fitxer (crea'n un o tria'n un d'existent), l'aplicació hi desarà cada canvi. Per seguretat, el navegador pot demanar-te de reconfirmar el permís amb un clic en tornar a obrir la pàgina."
+        : "El teu navegador no suporta l'escriptura directa de fitxers (File System Access): usa Chrome o Edge per a l'autoguardat en fitxer. Amb aquest navegador, les dades es desen al navegador i pots exportar el JSON manualment."}</p>`
+    : `
+      <p>Magatzem <span class="badge b-roig">no disponible</span>: treballes en mode memòria. Exporta el fitxer JSON abans de tancar per no perdre res.</p>
+      ${suportaFSA ? `<div class="toolrow" style="margin:10px 0 0"><button class="btn pri" onclick="connectaFitxer()">Connecta un fitxer local…</button></div>` : ""}`}
+  </div>
+  <div class="card" style="max-width:640px">
+    <h2>Fitxer de text (JSON)</h2>
+    <div class="toolrow" style="margin:10px 0 0">
+      <button class="btn pri" onclick="exportaJSON()">Exporta còpia de seguretat</button>
+      <label class="btn" style="display:inline-block">Importa fitxer…<input type="file" accept=".json,.txt,application/json" style="display:none" onchange="importaJSON(this)"></label>
+    </div>
+    <p class="tiny mut" style="margin-top:10px">S'exporten TOTS els grups-aula (cada mòdul + grup, amb alumnat, reptes, RA en mode Activitats i notes directes). La importació substitueix completament les dades actuals (tots els grups-aula) i accepta també fitxers de versions anteriors.</p>
+  </div>
+  <div class="card" style="max-width:640px">
+    <h2>Restabliment</h2>
+    <div class="toolrow" style="margin:10px 0 0">
+      <button class="btn peril" onclick="restableix()">Restableix les dades d'exemple (3 reptes)</button>
+    </div>
+    <p class="tiny mut" style="margin-top:10px">Esborra tots els grups-aula actuals i en deixa un de sol, amb els 16 alumnes de mostra i els tres reptes de l'exemple (L'oficina digital amb notes d'exemple; La plataforma interna i Sortim al món amb l'estructura preparada).</p>
+  </div>`;
+}
+function exportaJSON() {
+  baixa("avaluacio_mp8_" + new Date().toISOString().slice(0, 10) + ".json", JSON.stringify(state, null, 2), "application/json");
+}
+function importaJSON(inp) {
+  const f = inp.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    try {
+      const brut = JSON.parse(r.result);
+      const nou = normalitza(brut);
+      if (!nou || !nou.cursos || !nou.cursos.length) throw new Error("estructura");
+      if (!await confirmModal("Substituir totes les dades actuals (tots els grups-aula) per les del fitxer?")) { inp.value = ""; return; }
+      state = nou; anarPrimeraVistaDelCurs(); save(); render();
+    } catch (e) {
+      await alertModal("El fitxer no té el format esperat. Comprova que sigui una exportació d'aquesta aplicació.");
+    }
+    inp.value = "";
+  };
+  r.readAsText(f);
+}
+async function restableix() {
+  if (!await confirmModal("Segur? S'esborraran totes les dades actuals (tots els grups-aula) i es carregarà l'exemple complet d'un grup-aula.")) return;
+  state = seed(); anarPrimeraVistaDelCurs(); save(); render();
+}
+
+/* ================= arrencada ================= */
+(async function () {
+  const desat = await initStorage();
+  state = desat || seed();
+  anarPrimeraVistaDelCurs();
+  if (location.hash) aplicaHash(); // restaura l'estat si s'obre des d'un marcador
+  save(); // consolida (i escriu una eventual migració)
+  if (state.seguretat.activat && state.seguretat.hash) {
+    mostraBloqueig();
+  } else {
+    render();
+    reiniciaTemporitzadorInactivitat();
+  }
+})();
+</script>
+</body>
+</html>
